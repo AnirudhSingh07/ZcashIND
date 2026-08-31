@@ -4,6 +4,10 @@ import { getVerifiedByKind } from "@/lib/data";
 import { formatIST, isPast } from "@/lib/utils";
 import { Container, Section, Badge, ButtonLink } from "@/components/ui";
 import { site } from "@/config/site";
+import { media } from "@/config/media";
+import { LumaPanel } from "@/components/social/luma-panel";
+import { XTimeline } from "@/components/social/x-timeline";
+import { VideoGrid } from "@/components/social/video-grid";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -42,6 +46,11 @@ export default async function EventsPage() {
           </ButtonLink>
         </div>
 
+        {/* Luma events panel */}
+        <div className="mt-8">
+          <LumaPanel />
+        </div>
+
         {upcoming.length > 0 && (
           <>
             <h2 className="mt-12 text-sm font-semibold uppercase tracking-wide text-gold">
@@ -71,6 +80,56 @@ export default async function EventsPage() {
         {events.length === 0 && (
           <p className="mt-12 text-muted">No official events listed yet.</p>
         )}
+
+        {/* Aftermovies & recaps */}
+        <div className="mt-16">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div>
+              <Badge tone="gold" className="mb-3">
+                Aftermovies & recaps
+              </Badge>
+              <h2 className="text-2xl font-bold sm:text-3xl">
+                Videos from our events
+              </h2>
+              <p className="mt-2 max-w-xl text-muted">
+                Recaps and aftermovies from Zcash India meetups, straight from our
+                X feed. {site.voice.impact}
+              </p>
+            </div>
+            <ButtonLink href={media.xUrl} variant="ghost" external>
+              Follow @{media.xHandle}
+            </ButtonLink>
+          </div>
+
+          {media.videos.length > 0 && (
+            <div className="mt-6">
+              <VideoGrid videos={media.videos} />
+            </div>
+          )}
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_360px]">
+            <XTimeline handle={media.xHandle} height={620} />
+            <div className="card flex flex-col justify-center p-6">
+              <h3 className="text-lg font-semibold">Catch every aftermovie</h3>
+              <p className="mt-2 text-sm text-muted">
+                We post recap videos and photos after each meetup. Follow along on
+                X and Instagram, or relive them on the{" "}
+                <Link href="/map" className="text-gold hover:underline">
+                  IRL map
+                </Link>
+                .
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <ButtonLink href={media.xUrl} external>
+                  Watch on X
+                </ButtonLink>
+                <ButtonLink href={media.instagramUrl} variant="ghost" external>
+                  Instagram
+                </ButtonLink>
+              </div>
+            </div>
+          </div>
+        </div>
       </Container>
     </Section>
   );

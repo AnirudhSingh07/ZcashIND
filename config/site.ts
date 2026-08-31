@@ -34,6 +34,16 @@ export const site = {
     donation: "#", // donation placeholder — wire up in Phase 2
   },
 
+  // Luma events. The profile can't be iframed (SAMEORIGIN), so we link out to it
+  // and embed individual events via their Luma embed IDs. To show a live preview
+  // of an event, paste its Luma embed ID below (from the event's Share → Embed).
+  // ID looks like "evt-XXXXXXXXXXXX" (or the full lu.ma/<slug>).
+  luma: {
+    profileUrl: "https://luma.com/user/zcashindia",
+    // Optional: featured events to embed on /events, newest first.
+    featured: [] as { id: string; title?: string }[],
+  },
+
   // Bounty campaign config.
   bounty: {
     period: "2026-09",
