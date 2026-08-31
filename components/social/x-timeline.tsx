@@ -29,42 +29,65 @@ function loadWidgets(): Promise<void> {
 }
 
 /**
- * Embeds the live X (@handle) timeline — shows the account's recent posts,
- * including aftermovie videos. No per-post IDs needed. Falls back to a link
- * if the X widget is blocked (e.g. by a tracking blocker).
+ * Embeds the live X (@handle) timeline — recent posts, including aftermovie
+ * videos. X's free timeline widget is best-effort: it renders reliably for
+ * logged-in X visitors but can come back blank otherwise, so we always show a
+ * header + "Open on X" link and swap in a clean fallback if the widget doesn't
+ * produce a real (tall enough) iframe.
  */
 export function XTimeline({
   handle,
-  height = 640,
+  height = 620,
 }: {
   handle: string;
   height?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [failed, setFailed] = useState(false);
+  const [state, setState] = useState<"loading" | "ok" | "fallback">("loading");
 
   useEffect(() => {
     let cancelled = false;
-    const timer = setTimeout(() => {
-      // If nothing rendered after a while, assume it was blocked.
-      if (!cancelled && ref.current && ref.current.querySelector("iframe") == null) {
-        setFailed(true);
-      }
-    }, 6000);
+
+    const check = () => {
+      if (cancelled || !ref.current) return;
+      const frame = ref.current.querySelector("iframe");
+      const tallEnough = frame && frame.clientHeight > 150;
+      setState(tallEnough ? "ok" : "fallback");
+    };
 
     loadWidgets().then(() => {
       if (!cancelled && ref.current) window.twttr?.widgets.load(ref.current);
     });
 
+    const t = setTimeout(check, 5000);
     return () => {
       cancelled = true;
-      clearTimeout(timer);
+      clearTimeout(t);
     };
   }, [handle]);
 
   return (
-    <div className="card overflow-hidden">
-      <div ref={ref} className="min-h-[200px]">
+    <div className="card flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between border-b border-line px-5 py-3">
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          <span aria-hidden>📹</span> Live from @{handle}
+        </span>
+        <a
+          href={`https://x.com/${handle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-gold hover:underline"
+        >
+          Open on X ↗
+        </a>
+      </div>
+
+      {/* Widget mount — hidden once we decide to show the fallback */}
+      <div
+        ref={ref}
+        className={state === "fallback" ? "hidden" : "min-h-[220px]"}
+        style={{ maxHeight: height }}
+      >
         <a
           className="twitter-timeline"
           data-theme="dark"
@@ -72,20 +95,23 @@ export function XTimeline({
           data-chrome="noheader nofooter transparent noborders"
           href={`https://twitter.com/${handle}`}
         >
-          Posts by @{handle}
+          Loading posts by @{handle}…
         </a>
       </div>
-      {failed && (
-        <div className="p-6 text-center text-sm text-muted">
-          The X feed couldn&apos;t load here (a browser extension may be blocking
-          it).{" "}
+
+      {state === "fallback" && (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
+          <p className="text-sm text-muted">
+            Our aftermovies and recap videos live on X. The embedded feed loads
+            best when you&apos;re signed in to X — otherwise open it directly:
+          </p>
           <a
             href={`https://x.com/${handle}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gold hover:underline"
+            className="btn-gold px-5 py-2 text-sm"
           >
-            Open @{handle} on X ↗
+            Watch @{handle} on X ↗
           </a>
         </div>
       )}

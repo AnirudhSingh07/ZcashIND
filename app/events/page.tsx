@@ -1,28 +1,19 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getVerifiedByKind } from "@/lib/data";
-import { formatIST, isPast } from "@/lib/utils";
 import { Container, Section, Badge, ButtonLink } from "@/components/ui";
 import { site } from "@/config/site";
 import { media } from "@/config/media";
-import { LumaPanel } from "@/components/social/luma-panel";
+import { LumaEvents } from "@/components/social/luma-events";
 import { XTimeline } from "@/components/social/x-timeline";
 import { VideoGrid } from "@/components/social/video-grid";
 
 export const metadata: Metadata = {
   title: "Events",
-  description: "Official Zcash India events — meetups, campus workshops and the online Live series.",
+  description:
+    "Official Zcash India events — campus editions, community connects and the online Live & Dev series. Straight from our Luma.",
 };
 
-export default async function EventsPage() {
-  const events = await getVerifiedByKind("official_event");
-  const upcoming = events
-    .filter((e) => !isPast(e.startsAt))
-    .sort((a, b) => +new Date(a.startsAt) - +new Date(b.startsAt));
-  const past = events
-    .filter((e) => isPast(e.startsAt))
-    .sort((a, b) => +new Date(b.startsAt) - +new Date(a.startsAt));
-
+export default function EventsPage() {
   return (
     <Section>
       <Container>
@@ -33,8 +24,8 @@ export default async function EventsPage() {
             </Badge>
             <h1 className="text-4xl font-bold sm:text-5xl">Official events</h1>
             <p className="mt-4 max-w-xl text-lg text-muted">
-              Meetups, campus workshops and the online Zcash India Live series.
-              For community-hosted IRL meetups, see the{" "}
+              Campus editions, community connects, and the online Live &amp; Dev
+              series — all on our Luma. For community-hosted IRL meetups, see the{" "}
               <Link href="/map" className="text-gold hover:underline">
                 map
               </Link>
@@ -46,40 +37,10 @@ export default async function EventsPage() {
           </ButtonLink>
         </div>
 
-        {/* Luma events panel */}
-        <div className="mt-8">
-          <LumaPanel />
+        {/* Real Luma events */}
+        <div className="mt-10">
+          <LumaEvents />
         </div>
-
-        {upcoming.length > 0 && (
-          <>
-            <h2 className="mt-12 text-sm font-semibold uppercase tracking-wide text-gold">
-              Upcoming
-            </h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {upcoming.map((e) => (
-                <EventCard key={e.id} e={e} />
-              ))}
-            </div>
-          </>
-        )}
-
-        {past.length > 0 && (
-          <>
-            <h2 className="mt-12 text-sm font-semibold uppercase tracking-wide text-muted">
-              Past
-            </h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {past.map((e) => (
-                <EventCard key={e.id} e={e} past />
-              ))}
-            </div>
-          </>
-        )}
-
-        {events.length === 0 && (
-          <p className="mt-12 text-muted">No official events listed yet.</p>
-        )}
 
         {/* Aftermovies & recaps */}
         <div className="mt-16">
@@ -132,35 +93,5 @@ export default async function EventsPage() {
         </div>
       </Container>
     </Section>
-  );
-}
-
-function EventCard({
-  e,
-  past,
-}: {
-  e: Awaited<ReturnType<typeof getVerifiedByKind>>[number];
-  past?: boolean;
-}) {
-  return (
-    <Link
-      href={`/events/${e.slug}`}
-      className={`card group p-6 transition-colors hover:border-gold/50 ${
-        past ? "" : "border-gold/40 bg-gold/5"
-      }`}
-    >
-      <div className="flex items-center gap-2">
-        <span className="text-xl">{e.isOnline ? "🖥️" : "🎪"}</span>
-        {past ? <Badge tone="muted">Past</Badge> : <Badge tone="gold">Upcoming</Badge>}
-        {e.isOnline && <Badge tone="muted">Online</Badge>}
-      </div>
-      <h3 className="mt-3 text-lg font-semibold group-hover:text-gold">
-        {e.title}
-      </h3>
-      <p className="mt-1 text-sm text-muted">
-        {e.city} · {formatIST(e.startsAt)}
-      </p>
-      {e.summary && <p className="mt-2 text-sm text-muted/80">{e.summary}</p>}
-    </Link>
   );
 }
