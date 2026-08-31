@@ -15,10 +15,14 @@ export type LumaEvent = {
   /** ISO datetime in IST (+05:30). */
   startsAt: string;
   city: string; // "Online" for the Live series
+  state?: string;
   venue?: string;
   isOnline: boolean;
   series: "live" | "dev" | "irl"; // grouping
   coHosts?: string;
+  /** Map coordinates for in-person editions. */
+  lat?: number;
+  lng?: number;
 };
 
 // Newest first.
@@ -148,6 +152,25 @@ export const lumaEvents: LumaEvent[] = [
     series: "live",
   },
 ];
+
+// City metadata for in-person editions (map coordinates + state).
+const CITY_META: Record<string, { lat: number; lng: number; state: string }> = {
+  Surat: { lat: 21.1702, lng: 72.8311, state: "Gujarat" },
+  Ahmedabad: { lat: 23.0225, lng: 72.5714, state: "Gujarat" },
+  Bhopal: { lat: 23.2599, lng: 77.4126, state: "Madhya Pradesh" },
+  Vadodara: { lat: 22.3072, lng: 73.1812, state: "Gujarat" },
+  Udaipur: { lat: 24.5854, lng: 73.7125, state: "Rajasthan" },
+  Indore: { lat: 22.7196, lng: 75.8577, state: "Madhya Pradesh" },
+};
+
+/** In-person editions with resolved coordinates + state (for the map & cities). */
+export const inPersonEvents: (LumaEvent & {
+  lat: number;
+  lng: number;
+  state: string;
+})[] = lumaEvents
+  .filter((e) => e.series === "irl" && CITY_META[e.city])
+  .map((e) => ({ ...e, ...CITY_META[e.city] }));
 
 export function lumaUrl(slug: string): string {
   return `https://lu.ma/${slug}`;

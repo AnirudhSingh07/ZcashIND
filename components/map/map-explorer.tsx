@@ -4,79 +4,40 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PublicMeetup, cityToSlug } from "@/lib/data";
 import { MeetupMap } from "@/components/map/meetup-map";
-import { VENUE_LABELS } from "@/lib/validation";
 import { padNode, formatDateIST } from "@/lib/utils";
-import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-type Time = "all" | "upcoming" | "past";
 type Kind = "all" | "official_event" | "irl_bounty";
 
 export function MapExplorer({ meetups }: { meetups: PublicMeetup[] }) {
-  const [time, setTime] = useState<Time>("all");
   const [kind, setKind] = useState<Kind>("all");
-  const [newCityOnly, setNewCityOnly] = useState(false);
-  const [venue, setVenue] = useState<string>("all");
-  const [bountyOnly, setBountyOnly] = useState(false);
   const [mobileMap, setMobileMap] = useState(false);
 
-  const now = Date.now();
   const filtered = useMemo(() => {
     return meetups.filter((m) => {
-      const t = new Date(m.startsAt).getTime();
-      if (time === "upcoming" && t < now) return false;
-      if (time === "past" && t >= now) return false;
       if (kind !== "all" && m.kind !== kind) return false;
-      if (newCityOnly && !m.newCityActivation) return false;
-      if (venue !== "all" && m.venueType !== venue) return false;
-      if (bountyOnly && m.bountyPeriod !== site.bounty.period) return false;
       return true;
     });
-  }, [meetups, time, kind, newCityOnly, venue, bountyOnly, now]);
+  }, [meetups, kind]);
 
-  const venueOptions = Array.from(new Set(meetups.map((m) => m.venueType)));
+  const hasCommunity = meetups.some((m) => m.kind === "irl_bounty");
 
   return (
     <div className="relative">
       {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Segment
-          value={time}
-          onChange={(v) => setTime(v as Time)}
-          options={[
-            ["all", "All"],
-            ["upcoming", "Upcoming"],
-            ["past", "Past"],
-          ]}
-        />
-        <Segment
-          value={kind}
-          onChange={(v) => setKind(v as Kind)}
-          options={[
-            ["all", "All"],
-            ["official_event", "Official"],
-            ["irl_bounty", "IRL"],
-          ]}
-        />
-        <Toggle active={newCityOnly} onClick={() => setNewCityOnly((v) => !v)}>
-          🌱 New cities
-        </Toggle>
-        <Toggle active={bountyOnly} onClick={() => setBountyOnly((v) => !v)}>
-          Sept 2026
-        </Toggle>
-        <select
-          value={venue}
-          onChange={(e) => setVenue(e.target.value)}
-          className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-muted"
-        >
-          <option value="all">All venues</option>
-          {venueOptions.map((v) => (
-            <option key={v} value={v}>
-              {VENUE_LABELS[v] ?? v}
-            </option>
-          ))}
-        </select>
-      </div>
+      {hasCommunity && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Segment
+            value={kind}
+            onChange={(v) => setKind(v as Kind)}
+            options={[
+              ["all", "All"],
+              ["official_event", "Official"],
+              ["irl_bounty", "Community"],
+            ]}
+          />
+        </div>
+      )}
 
       {/* Mobile list/map toggle */}
       <div className="mb-3 flex gap-2 lg:hidden">
@@ -103,8 +64,9 @@ export function MapExplorer({ meetups }: { meetups: PublicMeetup[] }) {
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
         {/* Sidebar list */}
         <div className={cn("space-y-3", mobileMap && "hidden lg:block")}>
-          <p className="text-sm text-muted">
-            {filtered.length} {filtered.length === 1 ? "pin" : "pins"} shown
+          <p className="text-sm font-medium text-muted">
+            {filtered.length} {filtered.length === 1 ? "location" : "locations"}{" "}
+            across India
           </p>
           <div className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
             {filtered.map((m) => (
@@ -148,20 +110,27 @@ function SidebarCard({ m }: { m: PublicMeetup }) {
       className="card block p-4 transition-colors hover:border-gold/50"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="font-medium leading-snug">
+        <div className="min-w-0 font-medium leading-snug">
           <span className="mr-1">{official ? "🎪" : "🟡"}</span>
           {official ? m.title : `${m.city} — Node #${padNode(m.nodeNumber)}`}
         </div>
-        {m.newCityActivation && (
-          <span className="shrink-0 text-xs text-success">🌱 new</span>
-        )}
+        <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[11px] text-muted">
+          {official ? "Official" : "Community"}
+        </span>
       </div>
-      <div className="mt-2 text-sm text-muted">
-        👥 {m.attendeesTotal} · 🌱 {m.attendeesNewToZcash} new
-        {m.hostNamePublic && <> · 🟢 {m.hostNamePublic}</>}
-      </div>
+      {official ? (
+        <div className="mt-2 text-sm text-muted">
+          📍 {m.venueName ?? m.city}
+        </div>
+      ) : (
+        <div className="mt-2 text-sm text-muted">
+          👥 {m.attendeesTotal} · 🌱 {m.attendeesNewToZcash} new
+          {m.hostNamePublic && <> · 🟢 {m.hostNamePublic}</>}
+        </div>
+      )}
       <div className="mt-1 text-xs text-muted/60">
-        {m.city} · {formatDateIST(m.startsAt)}
+        {m.city}
+        {m.state ? `, ${m.state}` : ""} · {formatDateIST(m.startsAt)}
       </div>
     </Link>
   );
@@ -194,26 +163,3 @@ function Segment({
   );
 }
 
-function Toggle({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-3 py-1.5 text-sm transition-colors",
-        active
-          ? "border-gold bg-gold/15 text-gold"
-          : "border-line bg-surface text-muted hover:text-gold",
-      )}
-    >
-      {children}
-    </button>
-  );
-}

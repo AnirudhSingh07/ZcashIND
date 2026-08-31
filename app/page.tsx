@@ -1,160 +1,129 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { site } from "@/config/site";
+import { media } from "@/config/media";
+import { lumaEvents, lumaUrl } from "@/config/luma-events";
 import {
   getCounters,
   getCities,
-  getVerifiedByKind,
-  getNextOfficialEvent,
+  getMapPins,
   cityToSlug,
 } from "@/lib/data";
 import { getNews } from "@/lib/content";
-import { formatIST, formatDateIST } from "@/lib/utils";
-import { Container, Section, SectionHeading, ButtonLink, Stat, Badge } from "@/components/ui";
-import { MeetupCard } from "@/components/meetup-card";
+import { formatDateIST, formatIST } from "@/lib/utils";
+import {
+  Container,
+  Section,
+  SectionHeading,
+  ButtonLink,
+  Stat,
+  Badge,
+} from "@/components/ui";
 import { MeetupMap } from "@/components/map/meetup-map";
+import { IndiaMap } from "@/components/india-map";
+
+export const metadata: Metadata = {
+  title: `${site.name} — ${site.tagline}`,
+  description: site.description,
+};
 
 export default async function HomePage() {
-  const [counters, cities, irl, nextEvent] = await Promise.all([
+  const [counters, cities, pins] = await Promise.all([
     getCounters(),
     getCities(),
-    getVerifiedByKind("irl_bounty"),
-    getNextOfficialEvent(),
+    getMapPins(),
   ]);
+  const recentEvents = lumaEvents.slice(0, 3);
   const news = getNews().slice(0, 2);
-  const mapMeetups = [...irl, ...(await getVerifiedByKind("official_event"))];
 
   return (
     <>
-      {/* Hero */}
-      <Section className="pt-16 pb-8 sm:pt-24">
-        <Container>
-          <div className="max-w-3xl">
-            <Badge tone="gold" className="mb-5">
-              🇮🇳 The India front door for Zcash
-            </Badge>
-            <h1 className="text-4xl font-bold leading-[1.1] sm:text-6xl">
-              Learn financial privacy.
-              <br />
-              Find the next meetup.
-              <br />
-              <span className="text-gold">Put your city on the map.</span>
+      {/* ---------- Hero ---------- */}
+      <section className="relative overflow-hidden border-b border-line">
+        {/* India map backdrop */}
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <IndiaMap
+            variant="outline"
+            className="absolute -right-16 top-1/2 h-[130%] -translate-y-1/2 opacity-[0.18] sm:right-0 lg:opacity-25"
+          />
+          <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-gold/10 blur-[120px]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-transparent" />
+        </div>
+
+        <Container className="relative">
+          <div className="max-w-2xl py-20 sm:py-28">
+            <div className="mb-5 flex flex-wrap items-center gap-2">
+              <Badge tone="gold">🇮🇳 Official community</Badge>
+              <Badge tone="muted">Since 2026 · 6 cities</Badge>
+            </div>
+            <h1 className="text-4xl font-bold leading-[1.08] sm:text-6xl">
+              The home of <span className="text-gold">Zcash</span> in India.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted">
-              Zcash India is a grassroots community. We teach shielded money in
-              plain language, run real IRL meetups, and help you host one in your
-              city. {site.voice.oneAtATime}
+              A grassroots community learning financial privacy together — real
+              meetups on real campuses, an online Live series, and a growing map
+              of cities. {site.voice.oneAtATime}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href="/learn/start-here">Start here</ButtonLink>
+              <ButtonLink href={site.links.telegram} external>
+                Join the community
+              </ButtonLink>
+              <ButtonLink href="/learn/start-here" variant="ghost">
+                Start here
+              </ButtonLink>
               <ButtonLink href="/map" variant="ghost">
                 See the map
               </ButtonLink>
-              <ButtonLink href={site.links.telegram} variant="ghost" external>
-                Join Telegram
-              </ButtonLink>
+            </div>
+
+            {/* Social proof row */}
+            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
+              <span>Find us on</span>
+              <a href={site.links.x} target="_blank" rel="noopener noreferrer" className="hover:text-gold">X / Twitter</a>
+              <a href={site.links.telegram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Telegram</a>
+              <a href={site.links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Instagram</a>
+              <a href={site.links.forum} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Forum</a>
             </div>
           </div>
         </Container>
-      </Section>
+      </section>
 
-      {/* Next official event strip */}
-      {nextEvent && (
-        <Container>
-          <Link
-            href="/events"
-            className="card flex flex-col items-start justify-between gap-3 border-gold/40 bg-gold/5 p-5 sm:flex-row sm:items-center"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🎪</span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gold">
-                  Next official event
-                </p>
-                <p className="font-semibold">
-                  {nextEvent.title} · {nextEvent.city}
-                </p>
-                <p className="text-sm text-muted">{formatIST(nextEvent.startsAt)}</p>
-              </div>
-            </div>
-            <span className="btn-ghost px-4 py-2 text-sm">View events →</span>
-          </Link>
-        </Container>
-      )}
+      {/* ---------- Live stats ---------- */}
+      <Container className="relative -mt-8">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat value={counters.citiesLit} label="Cities across India" accent />
+          <Stat value={counters.eventsHosted} label="Events hosted" accent />
+          <Stat value={counters.onlineSessions} label="Online sessions" />
+          <Stat value="1,500+" label="Community on X" />
+        </div>
+      </Container>
 
-      {/* IRL bounty band with counters */}
-      <Section className="py-12">
-        <Container>
-          <div className="card overflow-hidden">
-            <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-lg">
-                <Badge tone="success" className="mb-3">
-                  IRL Meetup Bounty · September 2026
-                </Badge>
-                <h2 className="text-2xl font-bold sm:text-3xl">
-                  {site.voice.putCityOnMap}
-                </h2>
-                <p className="mt-2 text-muted">
-                  Host a mini-meetup, get it verified, and light up your city.{" "}
-                  {site.voice.impact} {site.voice.notInfluencers}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <ButtonLink href="/bounties/irl">See the bounty</ButtonLink>
-                  <ButtonLink href="/bounties/irl/submit" variant="ghost">
-                    Add your meetup
-                  </ButtonLink>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <Stat value={counters.citiesLit} label="Cities lit" accent />
-                <Stat value={counters.meetupsVerified} label="Meetups verified" accent />
-                <Stat value={counters.peopleNew} label="New to Zcash" accent />
-              </div>
-            </div>
-          </div>
-        </Container>
-      </Section>
-
-      {/* Mini map */}
-      <Section className="py-8">
+      {/* ---------- Start in 15 minutes ---------- */}
+      <Section>
         <Container>
           <SectionHeading
-            eyebrow="The map"
-            title="Zcash India IRL Map"
-            sub="Every gold pin is a real, verified meetup. Tap one to read the story."
-            cta={<ButtonLink href="/map" variant="ghost">Open full map</ButtonLink>}
-          />
-          <div className="card h-[380px] overflow-hidden">
-            <MeetupMap meetups={mapMeetups} />
-          </div>
-        </Container>
-      </Section>
-
-      {/* Start in 15 minutes */}
-      <Section className="py-12">
-        <Container>
-          <SectionHeading
-            eyebrow="New here?"
+            eyebrow="New to Zcash?"
             title="Start in 15 minutes"
-            sub="Three steps. No jargon. No wallet connect. We never ask for your seed."
+            sub="No jargon. No wallet connect. We never ask for your seed."
           />
           <div className="grid gap-4 sm:grid-cols-3">
             {[
               {
                 n: "1",
                 t: "Understand shielded money",
-                d: "Two minutes on what Zcash actually protects — who can see a payment and who can't.",
+                d: "Two minutes on what Zcash protects — who can see a payment and who can't.",
                 href: "/learn/what-is-zcash",
               },
               {
                 n: "2",
                 t: "Get a shielded wallet",
-                d: "Install Zashi or Zingo from an official source. Back up your seed. That's it.",
+                d: "Install Zashi or Zingo from an official source and back up your seed.",
                 href: "/learn/wallets",
               },
               {
                 n: "3",
                 t: "Join the community",
-                d: "Say hi on Telegram, find the next meetup, or host your own.",
+                d: "Say hi on Telegram, find the next event, or host your own.",
                 href: site.links.telegram,
               },
             ].map((s) => (
@@ -177,13 +146,124 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* 3 learn cards */}
+      {/* ---------- Recent events ---------- */}
+      <Section className="py-8">
+        <Container>
+          <SectionHeading
+            eyebrow="Events"
+            title="What we've been up to"
+            sub="Campus editions, community connects and our online Live series — all on Luma."
+            cta={
+              <ButtonLink href="/events" variant="ghost">
+                All events
+              </ButtonLink>
+            }
+          />
+          <div className="grid gap-4 sm:grid-cols-3">
+            {recentEvents.map((e) => (
+              <a
+                key={e.slug}
+                href={lumaUrl(e.slug)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card group flex flex-col p-6 transition-colors hover:border-gold/50"
+              >
+                <div className="flex items-center gap-2 text-sm text-muted">
+                  <span>{e.isOnline ? "🖥️" : "📍"}</span>
+                  <span>{e.isOnline ? "Online" : e.city}</span>
+                </div>
+                <h3 className="mt-2 font-semibold leading-snug group-hover:text-gold">
+                  {e.title}
+                </h3>
+                <p className="mt-2 text-sm text-muted">{formatIST(e.startsAt)}</p>
+                <span className="mt-auto pt-4 text-sm text-gold group-hover:underline">
+                  View on Luma ↗
+                </span>
+              </a>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      {/* ---------- Map preview ---------- */}
+      <Section className="py-8">
+        <Container>
+          <SectionHeading
+            eyebrow="The map"
+            title="Zcash India across the country"
+            sub="Every city where we've shown up — and space for yours."
+            cta={
+              <ButtonLink href="/map" variant="ghost">
+                Open full map
+              </ButtonLink>
+            }
+          />
+          <div className="card h-[400px] overflow-hidden">
+            <MeetupMap meetups={pins} />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {cities.map((c) => (
+              <Link
+                key={c.city}
+                href={`/map/${cityToSlug(c.city)}`}
+                className="card-2 rounded-full px-4 py-1.5 text-sm hover:border-gold/50"
+              >
+                📍 {c.city}
+              </Link>
+            ))}
+            <Link
+              href="/host"
+              className="rounded-full border border-dashed border-gold/50 px-4 py-1.5 text-sm text-gold hover:bg-gold/10"
+            >
+              + Your city
+            </Link>
+          </div>
+        </Container>
+      </Section>
+
+      {/* ---------- Aftermovies teaser ---------- */}
+      <Section className="py-8">
+        <Container>
+          <div className="card relative overflow-hidden border-gold/30 p-8 sm:p-10">
+            <IndiaMap
+              variant="dotted"
+              className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 opacity-10"
+            />
+            <div className="relative flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <Badge tone="gold" className="mb-3">
+                  Aftermovies
+                </Badge>
+                <h2 className="text-2xl font-bold sm:text-3xl">
+                  Relive every meetup
+                </h2>
+                <p className="mt-2 max-w-lg text-muted">
+                  Recap videos from Surat, Ahmedabad, Bhopal, Vadodara, Udaipur
+                  and Indore — straight from our X.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <ButtonLink href="/events">Watch recaps</ButtonLink>
+                <ButtonLink href={media.xUrl} variant="ghost" external>
+                  Follow @{media.xHandle}
+                </ButtonLink>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </Section>
+
+      {/* ---------- Learn ---------- */}
       <Section className="py-8">
         <Container>
           <SectionHeading
             eyebrow="Learn"
             title="Financial privacy, explained for India"
-            cta={<ButtonLink href="/learn" variant="ghost">All lessons</ButtonLink>}
+            cta={
+              <ButtonLink href="/learn" variant="ghost">
+                All lessons
+              </ButtonLink>
+            }
           />
           <div className="grid gap-4 sm:grid-cols-3">
             {[
@@ -219,82 +299,51 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* Latest IRL cards */}
-      {irl.length > 0 && (
-        <Section className="py-8">
-          <Container>
-            <SectionHeading
-              eyebrow="From the ground"
-              title="Latest IRL meetups"
-              cta={<ButtonLink href="/map" variant="ghost">See all pins</ButtonLink>}
-            />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {irl.slice(0, 3).map((m) => (
-                <MeetupCard key={m.id} m={m} />
-              ))}
-            </div>
-          </Container>
-        </Section>
-      )}
-
-      {/* Cities grid */}
+      {/* ---------- Community ---------- */}
       <Section className="py-8">
         <Container>
           <SectionHeading
-            eyebrow="Cities"
-            title="Where Zcash India is showing up"
-            sub="Don't see your city? It just needs a host."
+            eyebrow="Community"
+            title="Come build with us"
+            sub={site.voice.hcc}
           />
-          <div className="flex flex-wrap gap-2">
-            {cities.map((c) => (
-              <Link
-                key={c.city}
-                href={`/map/${cityToSlug(c.city)}`}
-                className="card-2 flex items-center gap-2 rounded-full px-4 py-2 text-sm hover:border-gold/50"
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { label: "Telegram", href: site.links.telegram, emoji: "💬", desc: "The main hub. Start here." },
+              { label: "X / Twitter", href: site.links.x, emoji: "𝕏", desc: "Announcements & aftermovies." },
+              { label: "Instagram", href: site.links.instagram, emoji: "📸", desc: "Photos from the ground." },
+              { label: "Forum", href: site.links.forum, emoji: "🗣️", desc: "Planning & long-form." },
+            ].map((c) => (
+              <a
+                key={c.label}
+                href={c.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card group p-6 transition-colors hover:border-gold/50"
               >
-                <span>📍 {c.city}</span>
-                {c.newCity && <Badge tone="success">🌱</Badge>}
-                <span className="text-muted/60">
-                  {c.nodeCount > 0 ? `${c.nodeCount} node${c.nodeCount > 1 ? "s" : ""}` : "official"}
-                </span>
-              </Link>
+                <div className="text-2xl">{c.emoji}</div>
+                <h3 className="mt-2 font-semibold group-hover:text-gold">
+                  {c.label} ↗
+                </h3>
+                <p className="mt-1 text-sm text-muted">{c.desc}</p>
+              </a>
             ))}
-            <Link
-              href="/host"
-              className="rounded-full border border-dashed border-gold/50 px-4 py-2 text-sm text-gold hover:bg-gold/10"
-            >
-              + Host in your city
-            </Link>
           </div>
         </Container>
       </Section>
 
-      {/* Pay with ZEC teaser */}
-      <Section className="py-8">
-        <Container>
-          <div className="card flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:items-center">
-            <div>
-              <h3 className="text-xl font-semibold">Pay with ZEC in India</h3>
-              <p className="mt-1 max-w-xl text-muted">
-                Merchants across India already accept Zcash. Find them — and add
-                your own — on ZecMap. We don't run a second merchant database.
-              </p>
-            </div>
-            <ButtonLink href="/pay" variant="ghost">
-              How paying works
-            </ButtonLink>
-          </div>
-        </Container>
-      </Section>
-
-      {/* Latest news */}
+      {/* ---------- Latest news ---------- */}
       {news.length > 0 && (
         <Section className="py-8">
           <Container>
             <SectionHeading
               eyebrow="News"
               title="Latest from Zcash India"
-              cta={<ButtonLink href="/news" variant="ghost">All news</ButtonLink>}
+              cta={
+                <ButtonLink href="/news" variant="ghost">
+                  All news
+                </ButtonLink>
+              }
             />
             <div className="grid gap-4 sm:grid-cols-2">
               {news.map((n) => (
@@ -322,22 +371,27 @@ export default async function HomePage() {
         </Section>
       )}
 
-      {/* Contribute CTA */}
+      {/* ---------- Closing CTA ---------- */}
       <Section className="pb-20 pt-8">
         <Container>
-          <div className="card border-gold/40 bg-gold/5 p-8 text-center sm:p-12">
-            <h2 className="text-2xl font-bold sm:text-3xl">
-              {site.voice.becomeContributor}
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-muted">
-              {site.voice.hcc} Host meetups, write local how-tos, help newcomers.
-              Participation alone doesn't guarantee status — impact does.
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <ButtonLink href="/contribute">How to contribute</ButtonLink>
-              <ButtonLink href="/host" variant="ghost">
-                Get the host kit
-              </ButtonLink>
+          <div className="card relative overflow-hidden border-gold/40 bg-gold/5 p-8 text-center sm:p-14">
+            <IndiaMap
+              variant="fill"
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[160%] -translate-x-1/2 -translate-y-1/2 opacity-[0.06]"
+            />
+            <div className="relative">
+              <h2 className="text-3xl font-bold sm:text-4xl">
+                {site.voice.putCityOnMap}
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-muted">
+                Host a meetup, write local how-tos, help newcomers. {site.voice.becomeContributor}
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <ButtonLink href="/host">Get the host kit</ButtonLink>
+                <ButtonLink href="/contribute" variant="ghost">
+                  How to contribute
+                </ButtonLink>
+              </div>
             </div>
           </div>
         </Container>

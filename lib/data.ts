@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { parsePhotos } from "./utils";
 import type { Meetup } from "@prisma/client";
+import { inPersonEvents, lumaEvents, lumaUrl } from "@/config/luma-events";
 
 /** Public-safe meetup shape — NEVER includes hostContactPrivate or adminNotes. */
 export type PublicMeetup = {
@@ -75,6 +76,50 @@ export function toPublic(m: Meetup): PublicMeetup {
   };
 }
 
+/** Real in-person Luma events, shaped as official-event map pins. */
+export function lumaPins(): PublicMeetup[] {
+  return inPersonEvents.map((e) => ({
+    id: `luma-${e.slug}`,
+    slug: e.slug,
+    kind: "official_event",
+    status: "verified",
+    title: e.title,
+    city: e.city,
+    state: e.state,
+    country: "India",
+    lat: e.lat,
+    lng: e.lng,
+    venueType: "college",
+    venueName: e.venue ?? null,
+    startsAt: e.startsAt,
+    endsAt: null,
+    durationMinutes: 120,
+    isOnline: false,
+    language: "English / हिंदी",
+    format: "workshop",
+    description: e.venue ?? null,
+    summary: e.coHosts ? `With ${e.coHosts}` : e.venue ?? null,
+    attendeesTotal: 0,
+    attendeesNewToZcash: 0,
+    newCityActivation: false,
+    nodeNumber: null,
+    registrationUrl: lumaUrl(e.slug),
+    photos: [],
+    brandingVisible: true,
+    hostNamePublic: "Zcash India",
+    hostContributorId: null,
+    bountyPeriod: null,
+    createdAt: e.startsAt,
+    verifiedAt: e.startsAt,
+  }));
+}
+
+/** Map pins = real Luma in-person events + community-verified IRL submissions. */
+export async function getMapPins(): Promise<PublicMeetup[]> {
+  const db = await getVerifiedMeetups();
+  return [...lumaPins(), ...db];
+}
+
 /** All verified meetups (map + public lists). */
 export async function getVerifiedMeetups(): Promise<PublicMeetup[]> {
   const rows = await prisma.meetup.findMany({
@@ -107,9 +152,9 @@ export type CitySummary = {
   meetups: PublicMeetup[];
 };
 
-/** Cities derived from verified meetups. */
+/** Cities derived from real events + verified community meetups. */
 export async function getCities(): Promise<CitySummary[]> {
-  const verified = await getVerifiedMeetups();
+  const verified = (await getMapPins()).filter((m) => !m.isOnline);
   const byCity = new Map<string, PublicMeetup[]>();
   for (const m of verified) {
     const key = m.city;
@@ -149,21 +194,19 @@ export async function getCity(citySlug: string): Promise<CitySummary | null> {
   );
 }
 
-/** Homepage / bounty counters. */
+/** Homepage counters — real numbers from actual events + community submissions. */
 export async function getCounters() {
-  const verified = await getVerifiedMeetups();
-  const cities = new Set(verified.map((m) => m.city));
-  const meetupsVerified = verified.filter(
-    (m) => m.kind === "irl_bounty",
-  ).length;
-  const peopleNew = verified.reduce(
-    (sum, m) => sum + (m.attendeesNewToZcash || 0),
-    0,
-  );
+  const db = await getVerifiedMeetups();
+  const pins = [...lumaPins(), ...db.filter((m) => !m.isOnline)];
+  const cities = new Set(pins.map((m) => m.city));
+  const eventsHosted = lumaEvents.length + db.length;
+  const onlineSessions = lumaEvents.filter((e) => e.isOnline).length;
+  const communityMeetups = db.filter((m) => m.kind === "irl_bounty").length;
   return {
     citiesLit: cities.size,
-    meetupsVerified,
-    peopleNew,
+    eventsHosted,
+    onlineSessions,
+    communityMeetups,
   };
 }
 
