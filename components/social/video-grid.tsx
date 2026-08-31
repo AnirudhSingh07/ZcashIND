@@ -137,9 +137,9 @@ export function VideoGrid({ videos }: { videos: EventVideo[] }) {
   if (videos.length === 0) return null;
 
   return (
-    <div ref={ref} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div ref={ref} className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {videos.map((v, i) => (
-        <figure key={v.url ?? v.embed ?? i} className="card overflow-hidden">
+        <figure key={v.url ?? v.embed ?? i} className="card self-start overflow-hidden">
           <VideoBody v={v} />
           <figcaption className="p-4">
             <div className="font-medium">{v.title}</div>
