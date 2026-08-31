@@ -1,22 +1,29 @@
 import { site } from "./site";
 
 /**
- * Event aftermovies & recaps.
+ * Event aftermovies & recaps — a curated grid on /events.
  *
- * The live @ZcashIND X timeline is embedded automatically on /events (and /recaps)
- * and shows every recent post — including aftermovie videos — with no config.
+ * Add each video below. For every item, provide EITHER `url` OR `embed`:
  *
- * To pin specific aftermovies in a curated grid, add them below. Paste either:
- *   - an X (Twitter) post URL:   https://x.com/ZcashIND/status/1234567890
- *   - a YouTube URL:             https://youtu.be/XXXX or https://www.youtube.com/watch?v=XXXX
- * The component detects the type from the URL.
+ *   `url`   — a plain link; the grid auto-detects the type:
+ *       • X (Twitter) post:  https://x.com/ZcashIND/status/1234567890
+ *       • YouTube:           https://youtu.be/XXXX  |  https://www.youtube.com/watch?v=XXXX
+ *       • Vimeo:             https://vimeo.com/123456789
+ *       • Direct video file: https://.../aftermovie.mp4
+ *
+ *   `embed` — a full embed snippet pasted from "Share → Embed" (X/YouTube/Instagram):
+ *       e.g.  <blockquote class="twitter-tweet">…</blockquote>
+ *        or   <iframe src="https://www.youtube.com/embed/XXXX" …></iframe>
+ *     (Rendered as-is. Only paste embed codes from sources you trust — this is
+ *      your own config, so that's fine.)
  */
 
 export type EventVideo = {
   title: string;
   event: string;
   date?: string; // ISO date, optional
-  url: string;
+  url?: string;
+  embed?: string;
 };
 
 export const media = {
