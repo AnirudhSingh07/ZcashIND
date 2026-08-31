@@ -1,0 +1,97 @@
+// ZcashIND Prisma schema — SQLite for MVP.
+// Enums are stored as strings (SQLite has no native enum support).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// A meetup / event / merchant pin. Public map shows only status = "verified".
+model Meetup {
+  id     String @id @default(cuid())
+  slug   String @unique
+
+  // kind: official_event | irl_bounty | merchant
+  kind   String @default("irl_bounty")
+  // status: pending | needs_info | verified | rejected | disqualified
+  status String @default("pending")
+
+  title   String
+  city    String
+  state   String?
+  country String @default("India")
+
+  lat Float
+  lng Float
+
+  // venueType: college | cafe | hostel | coworking | office | public | online | other
+  venueType String  @default("other")
+  venueName String?
+
+  startsAt        DateTime
+  endsAt          DateTime?
+  timezone        String   @default("Asia/Kolkata")
+  durationMinutes Int      @default(20)
+  isOnline        Boolean  @default(false)
+  language        String?
+
+  // format: privacy_talk | zcash_intro | ironwood | quiz | dev | chai_privacy | college_discussion | live_stream | workshop | other
+  format String @default("other")
+
+  description String?
+  summary     String?
+
+  attendeesTotal      Int @default(0)
+  attendeesNewToZcash Int @default(0)
+
+  newCityActivation Boolean @default(false)
+  nodeNumber        Int?
+
+  registrationUrl String?
+
+  // photos stored as a JSON string array of /uploads/... paths
+  photos String @default("[]")
+
+  brandingVisible Boolean @default(false)
+
+  // Public-facing host name (safe to display).
+  hostNamePublic String?
+  // Private contact — NEVER exposed on public routes. Admin only.
+  hostContactPrivate String?
+
+  hostContributor   Contributor? @relation(fields: [hostContributorId], references: [id])
+  hostContributorId String?
+
+  bountyPeriod String? // e.g. "2026-09"
+
+  adminNotes      String?
+  rejectionReason String?
+
+  createdAt  DateTime  @default(now())
+  verifiedAt DateTime?
+
+  @@index([status])
+  @@index([kind])
+  @@index([city])
+}
+
+/// A recognised Zcash India contributor.
+model Contributor {
+  id     String @id @default(cuid())
+  slug   String @unique
+  name   String
+  bio    String?
+  city   String?
+  telegram String?
+  x        String?
+  avatar   String?
+  official Boolean @default(false)
+
+  meetups Meetup[]
+
+  createdAt DateTime @default(now())
+}

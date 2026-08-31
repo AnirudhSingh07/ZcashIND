@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+/* ---- ZcashIND design tokens ---- */
+:root {
+  --bg: #0b0b0c;
+  --surface: #161412;
+  --surface-2: #2d2a26;
+  --text: #f5f2ea;
+  --muted: #d9d8d6;
+  --gold: #f4b728;
+  --gold-deep: #cf8a00;
+  --line: rgba(244, 183, 40, 0.18);
+  --success: #3ddc84;
+  --danger: #e85d4c;
+  --radius: 20px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-gold: var(--gold);
+  --color-gold-deep: var(--gold-deep);
+  --color-line: var(--line);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --radius-card: var(--radius);
+  --font-sans:
+    "Geist", "Inter", "Noto Sans Devanagari", ui-sans-serif, system-ui,
+    -apple-system, sans-serif;
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Thin gold hairline card */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.card-2 {
+  background-color: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* Gold primary button */
+.btn-gold {
+  background-color: var(--gold);
+  color: #0b0b0c;
+  font-weight: 600;
+  border-radius: 9999px;
+  transition:
+    background-color 0.15s ease,
+    transform 0.05s ease;
+}
+.btn-gold:hover {
+  background-color: var(--gold-deep);
+}
+.btn-gold:active {
+  transform: translateY(1px);
+}
+
+/* Outlined ghost button */
+.btn-ghost {
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 9999px;
+  font-weight: 600;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.btn-ghost:hover {
+  background-color: var(--gold);
+  color: #0b0b0c;
+}
+
+a {
+  color: inherit;
+}
+
+/* Focus ring for a11y */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Prose for MDX/markdown pages */
+.prose {
+  max-width: 68ch;
+  line-height: 1.7;
+  color: var(--text);
+}
+.prose h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+  line-height: 1.15;
+}
+.prose h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 2rem 0 0.5rem;
+  color: var(--gold);
+}
+.prose h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+.prose p {
+  margin: 0.85rem 0;
+  color: var(--muted);
+}
+.prose ul,
+.prose ol {
+  margin: 0.85rem 0;
+  padding-left: 1.4rem;
+  color: var(--muted);
+}
+.prose li {
+  margin: 0.35rem 0;
+  list-style: disc;
+}
+.prose ol li {
+  list-style: decimal;
+}
+.prose a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose strong {
+  color: var(--text);
+}
+.prose blockquote {
+  border-left: 3px solid var(--gold);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: var(--muted);
+  font-style: italic;
+}
+.prose code {
+  background: var(--surface-2);
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 2rem 0;
+}
+.prose .lead {
+  font-size: 1.15rem;
+  color: var(--text);
+}
+
+/* Maplibre popup dark theme override */
+.maplibregl-popup-content {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line);
+  border-radius: 16px !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+}
+.maplibregl-popup-tip {
+  border-top-color: var(--surface) !important;
+  border-bottom-color: var(--surface) !important;
+}
+.maplibregl-popup-close-button {
+  color: var(--muted) !important;
+  font-size: 1.2rem !important;
+  padding: 4px 8px !important;
+}
+.maplibregl-ctrl-attrib {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--muted) !important;
+}

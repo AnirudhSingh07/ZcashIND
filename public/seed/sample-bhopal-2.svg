@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#161412"/>
+  <rect x="1" y="1" width="798" height="598" fill="none" stroke="#F4B728" stroke-opacity="0.25" stroke-width="2"/>
+  <circle cx="400" cy="250" r="90" fill="#F4B728" fill-opacity="0.12"/>
+  <text x="400" y="270" font-family="Inter,sans-serif" font-size="90" font-weight="700" fill="#F4B728" text-anchor="middle">Z</text>
+  <text x="400" y="400" font-family="Inter,sans-serif" font-size="40" font-weight="700" fill="#F5F2EA" text-anchor="middle">Bhopal</text>
+  <text x="400" y="450" font-family="Inter,sans-serif" font-size="24" fill="#D9D8D6" text-anchor="middle">Group photo</text>
+  <text x="400" y="520" font-family="Inter,sans-serif" font-size="18" fill="#D9D8D6" fill-opacity="0.6" text-anchor="middle">Zcash India IRL · sample photo</text>
+</svg>
