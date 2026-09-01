@@ -114,10 +114,13 @@ export function lumaPins(): PublicMeetup[] {
   }));
 }
 
-/** Map pins = real Luma in-person events + community-verified IRL submissions. */
+/**
+ * Map pins = community-verified IRL submissions only. Starts empty and fills as
+ * real hosts submit meetups and admins verify them. (Official Luma events are
+ * shown on /events and in the homepage "cities" showcase, not as map pins.)
+ */
 export async function getMapPins(): Promise<PublicMeetup[]> {
-  const db = await getVerifiedMeetups();
-  return [...lumaPins(), ...db];
+  return getVerifiedMeetups();
 }
 
 /** All verified meetups (map + public lists). */
@@ -154,7 +157,8 @@ export type CitySummary = {
 
 /** Cities derived from real events + verified community meetups. */
 export async function getCities(): Promise<CitySummary[]> {
-  const verified = (await getMapPins()).filter((m) => !m.isOnline);
+  const db = await getVerifiedMeetups();
+  const verified = [...lumaPins(), ...db].filter((m) => !m.isOnline);
   const byCity = new Map<string, PublicMeetup[]>();
   for (const m of verified) {
     const key = m.city;

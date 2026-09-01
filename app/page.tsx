@@ -3,12 +3,7 @@ import type { Metadata } from "next";
 import { site } from "@/config/site";
 import { media } from "@/config/media";
 import { lumaEvents, lumaUrl } from "@/config/luma-events";
-import {
-  getCounters,
-  getCities,
-  getMapPins,
-  cityToSlug,
-} from "@/lib/data";
+import { getCounters, getCities, cityToSlug } from "@/lib/data";
 import { getNews } from "@/lib/content";
 import { formatDateIST, formatIST } from "@/lib/utils";
 import {
@@ -19,7 +14,6 @@ import {
   Stat,
   Badge,
 } from "@/components/ui";
-import { MeetupMap } from "@/components/map/meetup-map";
 import { IndiaMap } from "@/components/india-map";
 
 export const metadata: Metadata = {
@@ -28,10 +22,9 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [counters, cities, pins] = await Promise.all([
+  const [counters, cities] = await Promise.all([
     getCounters(),
     getCities(),
-    getMapPins(),
   ]);
   const recentEvents = lumaEvents.slice(0, 3);
   const news = getNews().slice(0, 2);
@@ -185,38 +178,47 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* ---------- Map preview ---------- */}
+      {/* ---------- Cities we've reached ---------- */}
       <Section className="py-8">
         <Container>
-          <SectionHeading
-            eyebrow="The map"
-            title="Zcash India across the country"
-            sub="Every city where we've shown up — and space for yours."
-            cta={
-              <ButtonLink href="/map" variant="ghost">
-                Open full map
-              </ButtonLink>
-            }
-          />
-          <div className="card h-[400px] overflow-hidden">
-            <MeetupMap meetups={pins} />
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {cities.map((c) => (
-              <Link
-                key={c.city}
-                href={`/map/${cityToSlug(c.city)}`}
-                className="card-2 rounded-full px-4 py-1.5 text-sm hover:border-gold/50"
-              >
-                📍 {c.city}
-              </Link>
-            ))}
-            <Link
-              href="/host"
-              className="rounded-full border border-dashed border-gold/50 px-4 py-1.5 text-sm text-gold hover:bg-gold/10"
-            >
-              + Your city
-            </Link>
+          <div className="card relative overflow-hidden p-6 sm:p-8">
+            <IndiaMap
+              variant="outline"
+              className="pointer-events-none absolute -right-8 top-1/2 hidden h-[150%] -translate-y-1/2 opacity-15 sm:block"
+            />
+            <div className="relative">
+              <SectionHeading
+                eyebrow="Across India"
+                title="Cities we've reached"
+                sub="Campus editions and community connects — and space for yours."
+                cta={
+                  <ButtonLink href="/map" variant="ghost">
+                    Open the map
+                  </ButtonLink>
+                }
+              />
+              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {cities.map((c) => (
+                  <Link
+                    key={c.city}
+                    href={`/map/${cityToSlug(c.city)}`}
+                    className="card-2 group flex items-center justify-between p-4 transition-colors hover:border-gold/50"
+                  >
+                    <span className="font-medium">📍 {c.city}</span>
+                    <span className="text-xs text-muted/70 group-hover:text-gold">
+                      {c.meetups.length}
+                      {c.meetups.length === 1 ? " event" : " events"}
+                    </span>
+                  </Link>
+                ))}
+                <Link
+                  href="/host"
+                  className="flex items-center justify-center rounded-[var(--radius-card)] border border-dashed border-gold/50 p-4 text-sm text-gold hover:bg-gold/10"
+                >
+                  + Your city
+                </Link>
+              </div>
+            </div>
           </div>
         </Container>
       </Section>

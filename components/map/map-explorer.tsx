@@ -65,16 +65,28 @@ export function MapExplorer({ meetups }: { meetups: PublicMeetup[] }) {
         {/* Sidebar list */}
         <div className={cn("space-y-3", mobileMap && "hidden lg:block")}>
           <p className="text-sm font-medium text-muted">
-            {filtered.length} {filtered.length === 1 ? "location" : "locations"}{" "}
-            across India
+            {filtered.length === 0
+              ? "No pins yet"
+              : `${filtered.length} ${filtered.length === 1 ? "location" : "locations"} across India`}
           </p>
           <div className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
             {filtered.map((m) => (
               <SidebarCard key={m.id} m={m} />
             ))}
             {filtered.length === 0 && (
-              <div className="card p-6 text-center text-muted">
-                No pins match these filters.
+              <div className="card p-6 text-center">
+                <div className="text-3xl">📍</div>
+                <h3 className="mt-3 font-semibold">The map is a clean slate</h3>
+                <p className="mt-2 text-sm text-muted">
+                  Verified community meetups appear here. Be the first — host one
+                  and put your city on the map.
+                </p>
+                <Link
+                  href="/bounties/irl/submit"
+                  className="btn-gold mt-4 inline-block px-5 py-2 text-sm"
+                >
+                  Add your meetup
+                </Link>
               </div>
             )}
           </div>
