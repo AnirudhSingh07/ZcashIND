@@ -5,6 +5,7 @@ const COL_SITE = [
   { href: "/learn", label: "Learn" },
   { href: "/map", label: "Map" },
   { href: "/events", label: "Events" },
+  { href: "/updates", label: "What's New" },
   { href: "/bounties/irl", label: "IRL Bounty" },
   { href: "/host", label: "Host kit" },
   { href: "/contributors", label: "Contributors" },
@@ -19,7 +20,7 @@ const COL_ECO = [
 const COL_COMMUNITY = [
   { href: site.links.telegram, label: "Telegram", ext: true },
   { href: site.links.x, label: "X", ext: true },
-  { href: site.links.forum, label: "Forum", ext: true },
+  { href: site.links.youtube, label: "YouTube", ext: true },
 ];
 
 function FooterLink({

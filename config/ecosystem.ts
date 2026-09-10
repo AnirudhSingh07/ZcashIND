@@ -47,14 +47,12 @@ export const ecosystem: {
     },
     {
       title: "Governance",
-      blurb: "Grants, community decisions and the forum.",
+      blurb: "Grants and community decisions.",
       links: [
         {
           label: "Zcash Community Grants",
           href: "https://zcashcommunitygrants.org/",
         },
-        { label: "Community forum", href: site.links.forum },
-        { label: "Zcash India on the forum", href: site.links.forum },
       ],
     },
   ],
@@ -71,7 +69,7 @@ export const ecosystem: {
     },
     {
       label: "Regional content bounty",
-      href: site.links.forum,
+      href: "/contribute",
       note: "Write local how-tos and recaps",
     },
   ],

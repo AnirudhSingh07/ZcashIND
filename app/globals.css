@@ -1,18 +1,31 @@
 @import "tailwindcss";
 
-/* ---- ZcashIND design tokens ---- */
+/* ---- ZcashIND design tokens — Ivory & Ink (light, bold editorial) ---- */
 :root {
-  --bg: #0b0b0c;
-  --surface: #161412;
-  --surface-2: #2d2a26;
-  --text: #f5f2ea;
-  --muted: #d9d8d6;
-  --gold: #f4b728;
-  --gold-deep: #cf8a00;
-  --line: rgba(244, 183, 40, 0.18);
-  --success: #3ddc84;
-  --danger: #e85d4c;
-  --radius: 20px;
+  --bg: #faf7f0; /* warm ivory canvas */
+  --surface: #ffffff; /* clean white cards pop on ivory */
+  --surface-2: #f2ecdf; /* soft sand for secondary blocks */
+  --text: #191510; /* warm near-black ink */
+  --muted: #6a6252; /* warm gray, readable on ivory */
+
+  --gold: #8a5e12; /* bronze-gold — the readable text/accent color */
+  --gold-deep: #6b4708; /* deeper bronze for hover */
+  --gold-bright: #f4b728; /* Zcash brand gold — reserved for fills & pins */
+
+  --line: rgba(25, 21, 16, 0.1);
+  --success: #1f7a46;
+  --danger: #b23a2e;
+  --radius: 16px;
+
+  --shadow-card: 0 1px 2px rgba(25, 21, 16, 0.04),
+    0 6px 20px rgba(25, 21, 16, 0.05);
+  --shadow-lift: 0 2px 4px rgba(25, 21, 16, 0.06),
+    0 14px 40px rgba(25, 21, 16, 0.1);
+
+  --font-display: "Fraunces", "Georgia", ui-serif, serif;
+  --font-body:
+    "Inter", "Noto Sans Devanagari", ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
 }
 
 @theme inline {
@@ -23,13 +36,13 @@
   --color-muted: var(--muted);
   --color-gold: var(--gold);
   --color-gold-deep: var(--gold-deep);
+  --color-gold-bright: var(--gold-bright);
   --color-line: var(--line);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --radius-card: var(--radius);
-  --font-sans:
-    "Geist", "Inter", "Noto Sans Devanagari", ui-sans-serif, system-ui,
-    -apple-system, sans-serif;
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-display);
 }
 
 * {
@@ -43,16 +56,47 @@ html {
 body {
   background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Thin gold hairline card */
+/* ---- Bold editorial typography ----
+   Display serif carries the big headlines site-wide; body stays clean sans. */
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+/* Hero-scale headlines lean heavier still. */
+.display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+}
+
+/* Small caps eyebrow used across sections. */
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
+  color: var(--gold);
+}
+
+/* Thin card on white */
 .card {
   background-color: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
 }
 
 .card-2 {
@@ -61,24 +105,27 @@ body {
   border-radius: var(--radius);
 }
 
-/* Gold primary button */
+/* Brand-gold primary button */
 .btn-gold {
-  background-color: var(--gold);
-  color: #0b0b0c;
+  background-color: var(--gold-bright);
+  color: #191510;
   font-weight: 600;
   border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(25, 21, 16, 0.12);
   transition:
     background-color 0.15s ease,
+    box-shadow 0.15s ease,
     transform 0.05s ease;
 }
 .btn-gold:hover {
-  background-color: var(--gold-deep);
+  background-color: #e8aa10;
+  box-shadow: 0 4px 14px rgba(244, 183, 40, 0.4);
 }
 .btn-gold:active {
   transform: translateY(1px);
 }
 
-/* Outlined ghost button */
+/* Outlined ghost button (bronze) */
 .btn-ghost {
   border: 1px solid var(--gold);
   color: var(--gold);
@@ -90,7 +137,7 @@ body {
 }
 .btn-ghost:hover {
   background-color: var(--gold);
-  color: #0b0b0c;
+  color: #fff;
 }
 
 a {
@@ -106,24 +153,25 @@ a {
 /* Prose for MDX/markdown pages */
 .prose {
   max-width: 68ch;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--text);
 }
 .prose h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.4rem;
+  font-weight: 600;
   margin: 1.5rem 0 0.75rem;
-  line-height: 1.15;
+  line-height: 1.05;
 }
 .prose h2 {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 600;
   margin: 2rem 0 0.5rem;
-  color: var(--gold);
+  color: var(--text);
 }
 .prose h3 {
+  font-family: var(--font-body);
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 1.5rem 0 0.5rem;
 }
 .prose p {
@@ -147,12 +195,14 @@ a {
   color: var(--gold);
   text-decoration: underline;
   text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
 }
 .prose strong {
   color: var(--text);
+  font-weight: 700;
 }
 .prose blockquote {
-  border-left: 3px solid var(--gold);
+  border-left: 3px solid var(--gold-bright);
   padding-left: 1rem;
   margin: 1rem 0;
   color: var(--muted);
@@ -170,18 +220,18 @@ a {
   margin: 2rem 0;
 }
 .prose .lead {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   color: var(--text);
 }
 
-/* Maplibre popup dark theme override */
+/* Maplibre popup — light theme */
 .maplibregl-popup-content {
   background: var(--surface) !important;
   color: var(--text) !important;
   border: 1px solid var(--line);
-  border-radius: 16px !important;
+  border-radius: 14px !important;
   padding: 0 !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: var(--shadow-lift) !important;
 }
 .maplibregl-popup-tip {
   border-top-color: var(--surface) !important;
@@ -193,8 +243,33 @@ a {
   padding: 4px 8px !important;
 }
 .maplibregl-ctrl-attrib {
-  background: rgba(0, 0, 0, 0.5) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
 }
 .maplibregl-ctrl-attrib a {
   color: var(--muted) !important;
+}
+
+/* --- Google Website Translator: hide default banner/UI, keep our dropdown --- */
+.goog-te-banner-frame,
+.goog-te-gadget-icon,
+#goog-gt-tt,
+.goog-te-balloon-frame {
+  display: none !important;
+}
+.skiptranslate iframe {
+  display: none !important;
+  visibility: hidden !important;
+}
+/* Google shifts <body> down for its banner — undo it. */
+body {
+  top: 0 !important;
+  position: static !important;
+}
+#google_translate_element {
+  display: none !important;
+}
+/* Remove the yellow highlight Google puts on translated text. */
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
 }

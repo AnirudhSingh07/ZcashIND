@@ -1,18 +1,19 @@
 import Link from "next/link";
-import { getLeaderboard, cityToSlug } from "@/lib/data";
+import { getLeaderboard, getBounty, cityToSlug } from "@/lib/data";
 import { padNode } from "@/lib/utils";
 import { Badge } from "@/components/ui";
 import { site } from "@/config/site";
 
 export async function Leaderboard() {
-  const rows = await getLeaderboard(site.bounty.period);
+  const { period } = await getBounty();
+  const rows = await getLeaderboard(period);
 
   return (
     <div className="card overflow-hidden">
       <div className="border-b border-line p-5">
         <h3 className="text-lg font-semibold">Public leaderboard</h3>
         <p className="mt-1 text-sm text-muted">
-          Verified {site.bounty.period} meetups only. Ranked by reach, not private
+          Verified {period} meetups only. Ranked by reach, not private
           judge scores. {site.voice.impact}
         </p>
       </div>

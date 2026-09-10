@@ -5,6 +5,7 @@ import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { PublicMeetup } from "@/lib/data";
 import { site } from "@/config/site";
+import { INDIA_MAP_STYLE } from "@/lib/map-style";
 import { isPast, padNode } from "@/lib/utils";
 
 export type MapMeetup = Pick<
@@ -38,7 +39,7 @@ function markerEl(m: MapMeetup): HTMLDivElement {
     : past
       ? "#2D2A26"
       : "#F4B728";
-  const border = past ? "#D9D8D6" : "#0B0B0C";
+  const border = "#ffffff";
   const glyph = official ? "★" : newCity ? "✦" : "";
 
   el.style.cssText = `
@@ -46,7 +47,7 @@ function markerEl(m: MapMeetup): HTMLDivElement {
     transform: rotate(-45deg);
     background: ${color};
     border: 2px solid ${border};
-    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    box-shadow: 0 2px 6px rgba(25,21,16,0.25);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   `;
@@ -58,7 +59,7 @@ function markerEl(m: MapMeetup): HTMLDivElement {
     el.appendChild(inner);
   }
   if (newCity) {
-    el.style.boxShadow = "0 0 0 4px rgba(61,220,132,0.35), 0 2px 6px rgba(0,0,0,0.5)";
+    el.style.boxShadow = "0 0 0 4px rgba(31,122,70,0.3), 0 2px 6px rgba(25,21,16,0.25)";
   }
   return el;
 }
@@ -106,7 +107,7 @@ export function MeetupMap({
 
     const map = new maplibregl.Map({
       container: ref.current,
-      style: site.map.styleUrl,
+      style: INDIA_MAP_STYLE,
       bounds: site.map.bounds,
       fitBoundsOptions: { padding: 40 },
       interactive,

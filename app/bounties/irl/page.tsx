@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { site } from "@/config/site";
+import { getBounty } from "@/lib/data";
 import { Container, Section, Badge, ButtonLink } from "@/components/ui";
 import { BountyPrizes } from "@/components/bounty-prizes";
 import { JudgingBars } from "@/components/judging-bars";
@@ -52,8 +53,9 @@ const PERKS = [
   "A portfolio record of your work",
 ];
 
-export default function IrlBountyPage() {
-  const min = site.bounty.minimums;
+export default async function IrlBountyPage() {
+  const bounty = await getBounty();
+  const min = bounty.minimums;
   return (
     <Section className="py-8">
       <Container>
@@ -70,7 +72,7 @@ export default function IrlBountyPage() {
             share of the prize pool, and a path to becoming a contributor.{" "}
             {site.voice.notInfluencers} {site.voice.impact}
           </p>
-          <p className="mt-3 font-medium text-gold">{site.bounty.windowLabel}</p>
+          <p className="mt-3 font-medium text-gold">{bounty.windowLabel}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <ButtonLink href="/bounties/irl/submit">Submit your meetup</ButtonLink>
             <ButtonLink href="/host" variant="ghost">

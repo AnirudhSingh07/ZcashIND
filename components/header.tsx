@@ -5,6 +5,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const NAV = [
   { href: "/learn", label: "Learn" },
@@ -19,7 +20,6 @@ const COMMUNITY = [
   { href: site.links.telegram, label: "Telegram" },
   { href: site.links.x, label: "X" },
   { href: site.links.instagram, label: "Instagram" },
-  { href: site.links.forum, label: "Forum" },
 ];
 
 export function Header() {
@@ -83,6 +83,8 @@ export function Header() {
             )}
           </div>
 
+          <LanguageSwitcher />
+
           <Link
             href="/bounties/irl/submit"
             className="btn-gold ml-2 px-4 py-1.5 text-sm"
@@ -91,15 +93,18 @@ export function Header() {
           </Link>
         </nav>
 
-        {/* Mobile toggle */}
-        <button
-          className="rounded-lg border border-line px-3 py-1.5 text-sm md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
-          aria-expanded={open}
-        >
-          {open ? "Close" : "Menu"}
-        </button>
+        {/* Mobile: language + menu toggle */}
+        <div className="flex items-center gap-2 md:hidden">
+          <LanguageSwitcher />
+          <button
+            className="rounded-lg border border-line px-3 py-1.5 text-sm"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Toggle menu"
+            aria-expanded={open}
+          >
+            {open ? "Close" : "Menu"}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}

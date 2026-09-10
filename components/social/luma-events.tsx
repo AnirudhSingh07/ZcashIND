@@ -1,4 +1,5 @@
-import { lumaEvents, lumaUrl, lumaEmbedUrl, type LumaEvent } from "@/config/luma-events";
+import { lumaUrl, lumaEmbedUrl, type LumaEvent } from "@/config/luma-events";
+import { getLumaEvents } from "@/lib/data";
 import { site } from "@/config/site";
 import { formatIST } from "@/lib/utils";
 import { Badge, ButtonLink } from "@/components/ui";
@@ -27,7 +28,8 @@ function EventRow({ e }: { e: LumaEvent }) {
   );
 }
 
-export function LumaEvents() {
+export async function LumaEvents() {
+  const lumaEvents = await getLumaEvents();
   const featured = lumaEvents.slice(0, 3);
   const irl = lumaEvents.filter((e) => e.series === "irl");
   const online = lumaEvents.filter((e) => e.series !== "irl");

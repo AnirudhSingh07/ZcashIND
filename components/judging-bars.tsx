@@ -1,8 +1,9 @@
 import { site } from "@/config/site";
+import { getBounty } from "@/lib/data";
 
-export function JudgingBars() {
-  const bars = site.bounty.judging;
-  const max = Math.max(...bars.map((b) => b.weight));
+export async function JudgingBars() {
+  const { judging: bars } = await getBounty();
+  const max = Math.max(...bars.map((b) => b.weight), 1);
   return (
     <div className="card p-6">
       <h3 className="text-lg font-semibold">How meetups are judged</h3>

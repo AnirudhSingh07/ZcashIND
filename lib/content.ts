@@ -48,9 +48,3 @@ export function getDoc(sub: string, slug: string): Doc | null {
   const { data, content } = matter(raw);
   return { slug, body: content, ...(data as Record<string, unknown>) } as Doc;
 }
-
-export function getNews(): Doc[] {
-  return readDir("news").sort((a, b) =>
-    (b.date ?? "").localeCompare(a.date ?? ""),
-  );
-}

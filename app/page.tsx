@@ -2,9 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { site } from "@/config/site";
 import { media } from "@/config/media";
-import { lumaEvents, lumaUrl } from "@/config/luma-events";
-import { getCounters, getCities, cityToSlug } from "@/lib/data";
-import { getNews } from "@/lib/content";
+import { lumaUrl } from "@/config/luma-events";
+import {
+  getCounters,
+  getCities,
+  cityToSlug,
+  getFeaturedPosts,
+  getLumaEvents,
+  getUpdates,
+} from "@/lib/data";
 import { formatDateIST, formatIST } from "@/lib/utils";
 import {
   Container,
@@ -15,6 +21,9 @@ import {
   Badge,
 } from "@/components/ui";
 import { IndiaMap } from "@/components/india-map";
+import { XTimeline } from "@/components/social/x-timeline";
+import { YouTubeVideos } from "@/components/social/youtube-videos";
+import { getYouTubeVideos } from "@/lib/youtube";
 
 export const metadata: Metadata = {
   title: `${site.name} — ${site.tagline}`,
@@ -22,12 +31,17 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [counters, cities] = await Promise.all([
-    getCounters(),
-    getCities(),
-  ]);
+  const [counters, cities, featuredPosts, lumaEvents, youtubeVideos, updates] =
+    await Promise.all([
+      getCounters(),
+      getCities(),
+      getFeaturedPosts(),
+      getLumaEvents(),
+      getYouTubeVideos(3),
+      getUpdates(),
+    ]);
+  const recentUpdates = updates.slice(0, 3);
   const recentEvents = lumaEvents.slice(0, 3);
-  const news = getNews().slice(0, 2);
 
   return (
     <>
@@ -37,10 +51,10 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
           <IndiaMap
             variant="outline"
-            className="absolute -right-16 top-1/2 h-[130%] -translate-y-1/2 opacity-[0.18] sm:right-0 lg:opacity-25"
+            className="absolute right-4 top-1/2 hidden h-[82%] max-h-[520px] w-auto -translate-y-1/2 opacity-30 sm:block lg:right-12"
           />
-          <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-gold/10 blur-[120px]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/85 to-transparent" />
+          <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-gold-bright/15 blur-[120px]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/80 to-bg/20" />
         </div>
 
         <Container className="relative">
@@ -49,7 +63,7 @@ export default async function HomePage() {
               <Badge tone="gold">🇮🇳 Official community</Badge>
               <Badge tone="muted">Since 2026 · 6 cities</Badge>
             </div>
-            <h1 className="text-4xl font-bold leading-[1.08] sm:text-6xl">
+            <h1 className="display text-5xl leading-[0.98] sm:text-7xl">
               The home of <span className="text-gold">Zcash</span> in India.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted">
@@ -69,13 +83,29 @@ export default async function HomePage() {
               </ButtonLink>
             </div>
 
+            {/* ZEC Live prize callout */}
+            <Link
+              href="/events"
+              className="mt-6 inline-flex items-center gap-3 rounded-full border border-gold/40 bg-gold-bright/10 py-2 pl-3 pr-4 text-sm transition-colors hover:bg-gold-bright/20"
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-bright px-2.5 py-0.5 text-xs font-bold text-text">
+                🏆 ZEC Live
+              </span>
+              <span className="text-text">
+                Win <strong className="font-semibold">real ZEC</strong> at our
+                online Live sessions
+              </span>
+              <span className="text-gold" aria-hidden="true">
+                →
+              </span>
+            </Link>
+
             {/* Social proof row */}
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
               <span>Find us on</span>
               <a href={site.links.x} target="_blank" rel="noopener noreferrer" className="hover:text-gold">X / Twitter</a>
               <a href={site.links.telegram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Telegram</a>
               <a href={site.links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Instagram</a>
-              <a href={site.links.forum} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Forum</a>
             </div>
           </div>
         </Container>
@@ -223,16 +253,27 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* ---------- Aftermovies teaser ---------- */}
+      {/* ---------- Latest from X ---------- */}
       <Section className="py-8">
         <Container>
-          <div className="card relative overflow-hidden border-gold/30 p-8 sm:p-10">
-            <IndiaMap
-              variant="dotted"
-              className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 opacity-10"
-            />
-            <div className="relative flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-              <div>
+          <SectionHeading
+            eyebrow="On X"
+            title={`Latest from @${media.xHandle}`}
+            sub="Announcements, recap videos and moments from the ground — live from our feed."
+            cta={
+              <ButtonLink href={media.xUrl} variant="ghost" external>
+                Follow @{media.xHandle}
+              </ButtonLink>
+            }
+          />
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_400px]">
+            {/* Aftermovies teaser */}
+            <div className="card relative flex h-full flex-col justify-center overflow-hidden border-gold/30 p-8 sm:p-10">
+              <IndiaMap
+                variant="dotted"
+                className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 opacity-10"
+              />
+              <div className="relative">
                 <Badge tone="gold" className="mb-3">
                   Aftermovies
                 </Badge>
@@ -243,17 +284,43 @@ export default async function HomePage() {
                   Recap videos from Surat, Ahmedabad, Bhopal, Vadodara, Udaipur
                   and Indore — straight from our X.
                 </p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <ButtonLink href="/events">Watch recaps</ButtonLink>
-                <ButtonLink href={media.xUrl} variant="ghost" external>
-                  Follow @{media.xHandle}
-                </ButtonLink>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <ButtonLink href="/events">Watch recaps</ButtonLink>
+                  <ButtonLink href={media.xUrl} variant="ghost" external>
+                    Follow @{media.xHandle}
+                  </ButtonLink>
+                </div>
               </div>
             </div>
+
+            {/* Live @handle timeline (with graceful fallback to recent posts) */}
+            <XTimeline
+              handle={media.xHandle}
+              height={560}
+              fallbackPosts={featuredPosts}
+            />
           </div>
         </Container>
       </Section>
+
+      {/* ---------- From YouTube ---------- */}
+      {youtubeVideos.length > 0 && (
+        <Section className="py-8">
+          <Container>
+            <SectionHeading
+              eyebrow="On YouTube"
+              title="Watch & learn"
+              sub="Talks, explainers and our Live series — fresh from the Zcash India channel."
+              cta={
+                <ButtonLink href={site.links.youtube} variant="ghost" external>
+                  Subscribe on YouTube
+                </ButtonLink>
+              }
+            />
+            <YouTubeVideos videos={youtubeVideos} />
+          </Container>
+        </Section>
+      )}
 
       {/* ---------- Learn ---------- */}
       <Section className="py-8">
@@ -313,8 +380,8 @@ export default async function HomePage() {
             {[
               { label: "Telegram", href: site.links.telegram, emoji: "💬", desc: "The main hub. Start here." },
               { label: "X / Twitter", href: site.links.x, emoji: "𝕏", desc: "Announcements & aftermovies." },
+              { label: "YouTube", href: site.links.youtube, emoji: "▶️", desc: "Talks, explainers & Live." },
               { label: "Instagram", href: site.links.instagram, emoji: "📸", desc: "Photos from the ground." },
-              { label: "Forum", href: site.links.forum, emoji: "🗣️", desc: "Planning & long-form." },
             ].map((c) => (
               <a
                 key={c.label}
@@ -334,38 +401,40 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* ---------- Latest news ---------- */}
-      {news.length > 0 && (
+      {/* ---------- What's new ---------- */}
+      {recentUpdates.length > 0 && (
         <Section className="py-8">
           <Container>
             <SectionHeading
-              eyebrow="News"
-              title="Latest from Zcash India"
+              eyebrow="What's new"
+              title="Updates from Zcash India"
               cta={
-                <ButtonLink href="/news" variant="ghost">
-                  All news
+                <ButtonLink href="/updates" variant="ghost">
+                  All updates
                 </ButtonLink>
               }
             />
-            <div className="grid gap-4 sm:grid-cols-2">
-              {news.map((n) => (
+            <div className="grid gap-4 sm:grid-cols-3">
+              {recentUpdates.map((u) => (
                 <Link
-                  key={n.slug}
-                  href={`/news/${n.slug}`}
-                  className="card group p-6 transition-colors hover:border-gold/50"
+                  key={u.id}
+                  href="/updates"
+                  className="card group flex flex-col p-6 transition-colors hover:border-gold/50"
                 >
-                  {n.tag && <Badge tone="gold">{n.tag}</Badge>}
-                  <h3 className="mt-3 text-lg font-semibold group-hover:text-gold">
-                    {n.title}
+                  <div className="flex items-center gap-2">
+                    {u.pinned && <Badge tone="gold">📌 Pinned</Badge>}
+                    {u.tag && !u.pinned && <Badge tone="gold">{u.tag}</Badge>}
+                  </div>
+                  <h3 className="mt-3 text-lg font-semibold leading-snug group-hover:text-gold">
+                    {u.title ?? u.tag ?? "New update"}
                   </h3>
-                  {n.description && (
-                    <p className="mt-2 text-sm text-muted">{n.description}</p>
+                  {u.body && (
+                    <p className="mt-2 line-clamp-3 text-sm text-muted">{u.body}</p>
                   )}
-                  {n.date && (
-                    <p className="mt-3 text-xs text-muted/60">
-                      {formatDateIST(n.date)}
-                    </p>
-                  )}
+                  <p className="mt-auto pt-3 text-xs text-muted/60">
+                    {formatDateIST(u.createdAt)}
+                    {u.xUrl && <span className="ml-2 text-gold">𝕏 post</span>}
+                  </p>
                 </Link>
               ))}
             </div>

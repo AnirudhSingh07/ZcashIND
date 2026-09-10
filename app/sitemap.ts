@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/config/site";
-import { getDocs, getNews } from "@/lib/content";
+import { getDocs } from "@/lib/content";
 import { getCities, cityToSlug } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 
@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/contributors",
     "/ecosystem",
     "/pay",
-    "/news",
+    "/updates",
     "/about",
     "/community",
     "/contribute",
@@ -26,7 +26,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const learn = getDocs("learn").map((d) => `/learn/${d.slug}`);
-  const news = getNews().map((n) => `/news/${n.slug}`);
   const cities = (await getCities()).map((c) => `/map/${cityToSlug(c.city)}`);
   const events = (
     await prisma.meetup.findMany({
@@ -41,7 +40,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const all = [
     ...staticPaths,
     ...learn,
-    ...news,
     ...cities,
     ...events,
     ...contributors,

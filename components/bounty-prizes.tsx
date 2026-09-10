@@ -1,7 +1,8 @@
 import { site } from "@/config/site";
+import { getBounty } from "@/lib/data";
 
-export function BountyPrizes() {
-  const { prizes, prizePoolUsd } = site.bounty;
+export async function BountyPrizes() {
+  const { prizes, prizePoolUsd } = await getBounty();
   return (
     <div className="card p-6">
       <div className="flex items-baseline justify-between">

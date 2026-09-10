@@ -26,6 +26,21 @@ export type EventVideo = {
   embed?: string;
 };
 
+/**
+ * Featured posts — a small, hand-picked set of @ZcashIND posts to spotlight.
+ *
+ * These are INDEPENDENT of aftermovies: use them for announcements, threads,
+ * milestones, partnerships — any post worth surfacing. They power the "Latest
+ * from @ZcashIND" fallback (shown when X's live widget can't render), newest
+ * first. Just paste the post URL; `subtitle` is an optional one-line label.
+ */
+export type FeaturedPost = {
+  title: string;
+  subtitle?: string;
+  date?: string; // ISO date, optional
+  url: string; // https://x.com/ZcashIND/status/…
+};
+
 export const media = {
   xHandle: "ZcashIND",
   xUrl: site.links.x,
@@ -64,4 +79,24 @@ export const media = {
       url: "https://x.com/ZcashIND/status/2049154827641561498",
     },
   ] as EventVideo[],
+
+  // Featured posts to spotlight on the site (independent of aftermovies above).
+  // Edit this list freely — announcements, threads, milestones, etc. Newest first.
+  featuredPosts: [
+    {
+      title: "Zcash Community Connect: Surat Edition",
+      subtitle: "Recap from the ground",
+      url: "https://x.com/ZcashIND/status/2092235721256177673",
+    },
+    {
+      title: "NEAR Legion India × Zcash India Builder Workshop",
+      subtitle: "Ahmedabad · partnership",
+      url: "https://x.com/ZcashIND/status/2090139303573868866",
+    },
+    {
+      title: "Zcash Community Connect: Bhopal Edition",
+      subtitle: "Campus meetup",
+      url: "https://x.com/ZcashIND/status/2079170866798350411",
+    },
+  ] as FeaturedPost[],
 };

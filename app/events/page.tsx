@@ -6,6 +6,7 @@ import { media } from "@/config/media";
 import { LumaEvents } from "@/components/social/luma-events";
 import { XTimeline } from "@/components/social/x-timeline";
 import { VideoGrid } from "@/components/social/video-grid";
+import { getFeaturedPosts, getAftermovies } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -13,7 +14,11 @@ export const metadata: Metadata = {
     "Official Zcash India events — campus editions, community connects and the online Live & Dev series. Straight from our Luma.",
 };
 
-export default function EventsPage() {
+export default async function EventsPage() {
+  const [featuredPosts, aftermovies] = await Promise.all([
+    getFeaturedPosts(),
+    getAftermovies(),
+  ]);
   return (
     <Section>
       <Container>
@@ -62,14 +67,18 @@ export default function EventsPage() {
             </ButtonLink>
           </div>
 
-          {media.videos.length > 0 && (
+          {aftermovies.length > 0 && (
             <div className="mt-6">
-              <VideoGrid videos={media.videos} />
+              <VideoGrid videos={aftermovies} />
             </div>
           )}
 
           <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_360px]">
-            <XTimeline handle={media.xHandle} height={620} />
+            <XTimeline
+              handle={media.xHandle}
+              height={620}
+              fallbackPosts={featuredPosts}
+            />
             <div className="card flex flex-col justify-center p-6">
               <h3 className="text-lg font-semibold">Catch every aftermovie</h3>
               <p className="mt-2 text-sm text-muted">

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getCities, getCity, cityToSlug } from "@/lib/data";
+import { getCities, getCity, getAftermoviesByCity, cityToSlug } from "@/lib/data";
 import { formatIST, formatDateIST, isPast, padNode } from "@/lib/utils";
 import { VENUE_LABELS, FORMAT_LABELS } from "@/lib/validation";
-import { Container, Section, Badge, ButtonLink, Stat } from "@/components/ui";
+import { Container, Section, Badge, ButtonLink } from "@/components/ui";
+import { VideoGrid } from "@/components/social/video-grid";
 import { site } from "@/config/site";
 import type { PublicMeetup } from "@/lib/data";
 
@@ -34,6 +35,7 @@ export default async function CityPage({
   const { city } = await params;
   const summary = await getCity(city);
   const displayName = summary?.city ?? decodeURIComponent(city).replace(/-/g, " ");
+  const aftermovies = summary ? await getAftermoviesByCity(summary.city) : [];
 
   // Empty city — needs a host.
   if (!summary) {
@@ -86,12 +88,6 @@ export default async function CityPage({
           <p className="mt-1 text-muted">{summary.state}, India</p>
         )}
 
-        <div className="mt-6 grid max-w-lg grid-cols-2 gap-3 sm:grid-cols-3">
-          <Stat value={summary.nodeCount} label="IRL nodes" accent />
-          <Stat value={summary.meetups.length} label="Total meetups" />
-          <Stat value={hosts.length} label="Hosts" />
-        </div>
-
         {/* Next meetup */}
         {upcoming[0] && (
           <div className="card mt-8 border-gold/40 bg-gold/5 p-6">
@@ -100,6 +96,21 @@ export default async function CityPage({
             </p>
             <h2 className="mt-1 text-lg font-semibold">{upcoming[0].title}</h2>
             <p className="text-sm text-muted">{formatIST(upcoming[0].startsAt)}</p>
+          </div>
+        )}
+
+        {/* Aftermovies for this city */}
+        {aftermovies.length > 0 && (
+          <div className="mt-10">
+            <div className="flex items-center gap-2">
+              <Badge tone="gold">🎬 Aftermovies</Badge>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+                Relive {summary.city}
+              </h2>
+            </div>
+            <div className="mt-4">
+              <VideoGrid videos={aftermovies} />
+            </div>
           </div>
         )}
 

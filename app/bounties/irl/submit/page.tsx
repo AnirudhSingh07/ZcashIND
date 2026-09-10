@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SubmitForm } from "@/components/submit-form";
 import { Container, Section, Badge } from "@/components/ui";
 import { site } from "@/config/site";
+import { getBounty } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Submit a meetup",
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
     "Submit your Zcash India IRL meetup for review. No account needed.",
 };
 
-export default function SubmitPage() {
+export default async function SubmitPage() {
+  const bounty = await getBounty();
   return (
     <Section>
       <Container className="max-w-3xl">
@@ -24,10 +26,10 @@ export default function SubmitPage() {
           every submission. Verified meetups appear on the public map with a node
           number. {site.voice.impact}
         </p>
-        <p className="mt-2 text-sm text-gold">{site.bounty.windowLabel}</p>
+        <p className="mt-2 text-sm text-gold">{bounty.windowLabel}</p>
 
         <div className="mt-8">
-          <SubmitForm />
+          <SubmitForm minimums={bounty.minimums} period={bounty.period} />
         </div>
       </Container>
     </Section>

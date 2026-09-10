@@ -17,9 +17,9 @@ const WAYS = [
   },
   {
     t: "Write local content",
-    d: "Regional recaps, how-tos in your language, notes for your city. There's a regional content bounty on the forum.",
-    href: site.links.forum,
-    cta: "See the forum",
+    d: "Regional recaps, how-tos in your language, notes for your city. Coordinate with us on Telegram.",
+    href: site.links.telegram,
+    cta: "Join Telegram",
     external: true,
   },
   {

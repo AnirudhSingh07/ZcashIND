@@ -33,21 +33,20 @@ export function IndiaMap({
           <circle cx="2" cy="2" r="1.6" fill="var(--gold)" />
         </pattern>
       </defs>
-      <g transform="translate(0,1024) scale(0.1,-0.1)">
-        <path
-          d={INDIA_PATH}
-          fill={
-            variant === "fill"
-              ? "url(#india-grad)"
-              : variant === "dotted"
-                ? "url(#india-dots)"
-                : "none"
-          }
-          stroke={variant === "outline" ? "url(#india-grad)" : "none"}
-          strokeWidth={variant === "outline" ? 8 : 0}
-          vectorEffect="non-scaling-stroke"
-        />
-      </g>
+      <path
+        d={INDIA_PATH}
+        fill={
+          variant === "fill"
+            ? "url(#india-grad)"
+            : variant === "dotted"
+              ? "url(#india-dots)"
+              : "none"
+        }
+        stroke={variant === "outline" ? "url(#india-grad)" : "none"}
+        strokeWidth={variant === "outline" ? 2.5 : 0}
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }

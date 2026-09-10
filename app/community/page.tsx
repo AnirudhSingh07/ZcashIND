@@ -27,12 +27,6 @@ const CHANNELS = [
     emoji: "📸",
   },
   {
-    label: "Forum",
-    href: site.links.forum,
-    desc: "Longer discussion, planning and the Zcash India 2026 thread.",
-    emoji: "🗣️",
-  },
-  {
     label: "Luma",
     href: site.links.luma,
     desc: "RSVP to upcoming official events.",

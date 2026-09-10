@@ -8,7 +8,12 @@ export function AdminNav() {
         {[
           ["/admin", "Dashboard"],
           ["/admin/submissions", "Submissions"],
-          ["/admin/events", "Events"],
+          ["/admin/luma", "Events"],
+          ["/admin/events", "Official"],
+          ["/admin/featured", "Featured"],
+          ["/admin/aftermovies", "Aftermovies"],
+          ["/admin/updates", "Updates"],
+          ["/admin/bounty", "Bounty"],
         ].map(([href, label]) => (
           <Link
             key={href}

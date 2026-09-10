@@ -154,7 +154,7 @@ export const lumaEvents: LumaEvent[] = [
 ];
 
 // City metadata for in-person editions (map coordinates + state).
-const CITY_META: Record<string, { lat: number; lng: number; state: string }> = {
+export const CITY_META: Record<string, { lat: number; lng: number; state: string }> = {
   Surat: { lat: 21.1702, lng: 72.8311, state: "Gujarat" },
   Ahmedabad: { lat: 23.0225, lng: 72.5714, state: "Gujarat" },
   Bhopal: { lat: 23.2599, lng: 77.4126, state: "Madhya Pradesh" },

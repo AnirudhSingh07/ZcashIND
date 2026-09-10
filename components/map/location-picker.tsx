@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { site } from "@/config/site";
+import { INDIA_MAP_STYLE } from "@/lib/map-style";
 
 /**
  * Click-the-map location picker. Sets hidden lat/lng inputs.
@@ -30,7 +31,7 @@ export function LocationPicker({
     if (!markerRef.current) {
       const el = document.createElement("div");
       el.style.cssText =
-        "width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#F4B728;border:2px solid #0B0B0C;box-shadow:0 2px 6px rgba(0,0,0,0.5)";
+        "width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#F4B728;border:2px solid #ffffff;box-shadow:0 2px 6px rgba(25,21,16,0.25)";
       markerRef.current = new maplibregl.Marker({
         element: el,
         draggable: true,
@@ -52,7 +53,7 @@ export function LocationPicker({
     if (!ref.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: ref.current,
-      style: site.map.styleUrl,
+      style: INDIA_MAP_STYLE,
       bounds: site.map.bounds,
       fitBoundsOptions: { padding: 30 },
     });

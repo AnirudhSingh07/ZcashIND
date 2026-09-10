@@ -50,11 +50,17 @@ function SubmitButton() {
   );
 }
 
-export function SubmitForm() {
+export function SubmitForm({
+  minimums = site.bounty.minimums,
+  period = site.bounty.period,
+}: {
+  minimums?: { attendees: number; newToZcash: number; minutes: number; photos: number };
+  period?: string;
+} = {}) {
   const [state, action] = useActionState(submitMeetup, initial);
   const e = state.errors ?? {};
   const v = state.values ?? {};
-  const min = site.bounty.minimums;
+  const min = minimums;
 
   return (
     <form action={action} className="space-y-8">
@@ -295,7 +301,7 @@ export function SubmitForm() {
       <fieldset className="card space-y-3 p-6">
         <legend className="px-1 text-lg font-semibold text-gold">Confirm</legend>
         {[
-          ["confirmInWindow", `This meetup happened during the bounty window (${site.bounty.period}).`, e.confirmInWindow],
+          ["confirmInWindow", `This meetup happened during the bounty window (${period}).`, e.confirmInWindow],
           ["confirmRealPhotos", "The photos are real and not AI-generated or manipulated.", e.confirmRealPhotos],
           ["confirmOnce", "I am submitting this meetup only once.", e.confirmOnce],
           ["confirmHonest", "I understand fake or inflated attendance means disqualification.", e.confirmHonest],

@@ -95,3 +95,89 @@ model Contributor {
 
   createdAt DateTime @default(now())
 }
+
+/// Hand-picked @ZcashIND posts spotlighted on the site (admin-managed).
+/// Powers the "Latest from @ZcashIND" feature when X's live widget can't render.
+model FeaturedPost {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  title     String
+  subtitle  String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([sortOrder])
+}
+
+/// "Updates & What's New" feed entries (admin-managed), usually built around an
+/// X post link, with an optional title/note and tag. Pinned items show first.
+model Update {
+  id        String   @id @default(cuid())
+  title     String?
+  body      String?
+  xUrl      String? // https://x.com/…/status/…
+  tag       String?
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([pinned])
+  @@index([createdAt])
+}
+
+/// Bounty cycle config (admin-managed). One row per period; the `active` one
+/// drives the /bounties/irl page, prizes, judging, minimums and submit form.
+/// `prizes` and `judging` are stored as JSON strings.
+model Bounty {
+  id            String   @id @default(cuid())
+  period        String   @unique // e.g. "2026-09"
+  windowLabel   String
+  prizePoolUsd  Int      @default(0)
+  prizes        String   @default("[]") // JSON: [{ place, amountUsd, note }]
+  minAttendees  Int      @default(4)
+  minNewToZcash Int      @default(2)
+  minMinutes    Int      @default(20)
+  minPhotos     Int      @default(3)
+  judging       String   @default("[]") // JSON: [{ label, weight }]
+  active        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([active])
+}
+
+/// Community events synced from Luma (admin-managed). Single source of truth for
+/// the /events list, homepage "recent events", and the map's in-person cities.
+model LumaEvent {
+  id        String   @id @default(cuid())
+  slug      String   @unique // lu.ma short code -> https://lu.ma/<slug>
+  title     String
+  startsAt  DateTime
+  city      String
+  state     String?
+  venue     String?
+  isOnline  Boolean  @default(false)
+  series    String   @default("irl") // live | dev | irl
+  coHosts   String?
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+
+  @@index([startsAt])
+}
+
+/// Event aftermovies / recap videos (admin-managed) shown in the grid on /events.
+/// Source is EITHER a `url` (X post, YouTube, Vimeo, or an uploaded /uploads/*.mp4)
+/// OR a raw `embed` snippet.
+model Aftermovie {
+  id        String    @id @default(cuid())
+  title     String
+  event     String
+  city      String?
+  url       String?
+  embed     String?
+  date      DateTime?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  @@index([sortOrder])
+  @@index([city])
+}

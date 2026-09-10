@@ -25,7 +25,7 @@ export const site = {
     x: "https://x.com/ZcashIND",
     telegram: "https://t.me/ZcashIN",
     instagram: "https://www.instagram.com/zcashind",
-    forum: "https://forum.zcashcommunity.com/t/zcash-india-2026/54762",
+    youtube: "https://www.youtube.com/@ZcashIND",
     luma: "https://luma.com/user/zcashindia",
     zechub: "https://zechub.wiki/",
     zecmap: "https://zecmap.com/map",
@@ -73,14 +73,14 @@ export const site = {
 
   // Map default bounds — fit India on load.
   map: {
-    // [west, south], [east, north]
+    // [west, south], [east, north] — north extends to ~37.4 to show all of J&K.
     bounds: [
-      [68.1, 6.5],
-      [97.4, 35.7],
+      [67.6, 6.5],
+      [97.6, 37.4],
     ] as [[number, number], [number, number]],
     styleUrl:
       process.env.NEXT_PUBLIC_MAP_STYLE ||
-      "https://tiles.openfreemap.org/styles/dark",
+      "https://tiles.openfreemap.org/styles/positron",
   },
 
   legal: "Not an exchange. Not financial advice.",
