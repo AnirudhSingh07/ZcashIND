@@ -311,34 +311,8 @@ class Sound {
     const d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     this.noiseBuf = buf;
-    // Wind: noise through a slowly wandering bandpass, gusting.
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.loop = true;
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.frequency.value = 380;
-    bp.Q.value = 0.6;
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = 900;
-    const g = ctx.createGain();
-    g.gain.value = 0.18;
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 0.07;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.08;
-    lfo.connect(lfoGain).connect(g.gain);
-    const lfo2 = ctx.createOscillator();
-    lfo2.frequency.value = 0.023;
-    const lfo2Gain = ctx.createGain();
-    lfo2Gain.gain.value = 160;
-    lfo2.connect(lfo2Gain).connect(bp.frequency);
-    src.connect(bp).connect(lp).connect(g).connect(this.master);
-    src.start();
-    lfo.start();
-    lfo2.start();
-    this.windGain = g;
+    // No ambient wind loop: only the climber's own sounds play.
+    this.windGain = null;
     this.enabled = true;
     this.master.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 1.5);
     if (ctx.state === "suspended") ctx.resume();
@@ -441,12 +415,8 @@ class Sound {
   breath() {
     this.burst(1200, 0.5, 0.5, 0.05, "bandpass");
   }
-  gust(strength: number) {
-    if (!this.windGain || !this.ctx) return;
-    const t = this.ctx.currentTime;
-    this.windGain.gain.cancelScheduledValues(t);
-    this.windGain.gain.setTargetAtTime(0.18 + strength * 0.3, t, 0.8);
-    this.windGain.gain.setTargetAtTime(0.18, t + 2.5, 1.5);
+  gust(_strength: number) {
+    // Wind is intentionally silent.
   }
 }
 
@@ -455,7 +425,7 @@ class Sound {
 // ---------------------------------------------------------------------------
 
 type Limb = { shoulder: THREE.Group; elbow: THREE.Group; hand: THREE.Object3D; l1: number; l2: number };
-type Leg = { hip: THREE.Group; knee: THREE.Group; foot: THREE.Object3D; l1: number; l2: number };
+type Leg = { hip: THREE.Group; knee: THREE.Group; ankle: THREE.Group; foot: THREE.Object3D; l1: number; l2: number };
 
 interface Rig {
   root: THREE.Group; // at the pelvis; +y up, faces the wall (-z is toward the wall)
@@ -680,46 +650,56 @@ function buildClimber(): Rig {
   const armL = makeArm(-1);
   const armR = makeArm(1);
 
-  // Legs: hip -> knee -> boot with gaiter and crampons
+  // Legs: hip -> knee -> ankle -> boot with gaiter and crampons
   const makeLeg = (sx: number): Leg => {
     const hip = new THREE.Group();
     hip.position.set(sx * 0.12, -0.08, 0);
     body.add(hip);
-    const thigh = capsule(0.085, 0.32, pants);
-    thigh.position.y = -0.2;
+    const thigh = capsule(0.088, 0.34, pants);
+    thigh.position.y = -0.22;
     hip.add(thigh);
+    const kneePad = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), pants);
+    kneePad.position.y = -0.44;
+    hip.add(kneePad);
     const knee = new THREE.Group();
-    knee.position.y = -0.4;
+    knee.position.y = -0.44;
     hip.add(knee);
-    const shin = capsule(0.07, 0.28, pants);
-    shin.position.y = -0.17;
+    const shin = capsule(0.072, 0.3, pants);
+    shin.position.y = -0.2;
     knee.add(shin);
-    const gaiter = capsule(0.078, 0.12, navy);
-    gaiter.position.y = -0.3;
+    const gaiter = capsule(0.08, 0.14, navy);
+    gaiter.position.y = -0.36;
     knee.add(gaiter);
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.28, 2, 2, 2), boot);
-    foot.position.set(0, -0.4, -0.06);
-    knee.add(foot);
-    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.025, 0.29), goldDark);
-    sole.position.set(0, -0.46, -0.06);
-    knee.add(sole);
-    // Crampon: frame + front points + downward spikes
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.012, 0.27), steel);
-    frame.position.set(0, -0.475, -0.06);
-    knee.add(frame);
-    for (const [px, pz] of [[-0.04, -0.18], [0.04, -0.18], [-0.045, -0.06], [0.045, -0.06], [-0.04, 0.05], [0.04, 0.05]]) {
+    const ankle = new THREE.Group();
+    ankle.position.y = -0.46;
+    knee.add(ankle);
+    // The boot hangs off the ankle: heel behind, toe toward -z (into the wall)
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.11, 0.3, 2, 2, 2), boot);
+    foot.position.set(0, -0.045, -0.07);
+    ankle.add(foot);
+    const cuffB = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.07, 0.08, 10), boot);
+    cuffB.position.set(0, 0.02, -0.01);
+    ankle.add(cuffB);
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.025, 0.31), goldDark);
+    sole.position.set(0, -0.11, -0.07);
+    ankle.add(sole);
+    // Crampon: frame + downward spikes + front points
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.012, 0.29), steel);
+    frame.position.set(0, -0.125, -0.07);
+    ankle.add(frame);
+    for (const [px, pz] of [[-0.04, -0.19], [0.04, -0.19], [-0.045, -0.07], [0.045, -0.07], [-0.04, 0.05], [0.04, 0.05]]) {
       const spike = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.04, 5), steel);
       spike.rotation.x = Math.PI;
-      spike.position.set(px, -0.5, pz);
-      knee.add(spike);
+      spike.position.set(px, -0.15, pz);
+      ankle.add(spike);
     }
     for (const px of [-0.03, 0.03]) {
-      const front = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.05, 5), steel);
+      const front = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.06, 5), steel);
       front.rotation.x = -Math.PI / 2;
-      front.position.set(px, -0.47, -0.22);
-      knee.add(front);
+      front.position.set(px, -0.125, -0.25);
+      ankle.add(front);
     }
-    return { hip, knee, foot, l1: 0.4, l2: 0.43 };
+    return { hip, knee, ankle, foot, l1: 0.44, l2: 0.46 };
   };
   const legL = makeLeg(-1);
   const legR = makeLeg(1);
@@ -1359,12 +1339,13 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     const hand = key === "hL" || key === "hR";
     const sx = key === "hL" || key === "fL" ? -1 : 1;
     out.copy(P)
-      .addScaledVector(fU, (hand ? 0.98 : -0.5) + lead)
-      .addScaledVector(fR, sx * (hand ? 0.3 : 0.24))
+      .addScaledVector(fU, (hand ? 0.98 : -0.82) + lead)
+      .addScaledVector(fR, sx * (hand ? 0.3 : 0.2))
       .addScaledVector(fN, -0.4);
     toSurface(out);
-    // Hands hold the axes: the pick is in the ice, the glove stands off the surface.
-    out.addScaledVector(fN, hand ? 0.2 : 0.09);
+    // Hands hold the axes with the picks in the ice; the ankle sits a boot's
+    // length out from the rock with the front points in.
+    out.addScaledVector(fN, hand ? 0.2 : 0.24);
     return out;
   }
 
@@ -1415,7 +1396,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         // Overstretched (after a slip or a big move): step it in.
         const joint = key === "hL" ? rig.armL.shoulder : key === "hR" ? rig.armR.shoulder : key === "fL" ? rig.legL.hip : rig.legR.hip;
         joint.getWorldPosition(tmpV);
-        const reach = key === "hL" || key === "hR" ? 0.57 : 0.8;
+        const reach = key === "hL" || key === "hR" ? 0.57 : 0.88;
         if (tmpV.distanceTo(c.pos) > reach) {
           c.from.copy(c.pos);
           idealContact(key, c.to);
@@ -1423,6 +1404,22 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         }
       }
     }
+  }
+
+  /** Orient an ankle so the boot's toe points into the rock and its sole faces down the slope. */
+  const _aq = new THREE.Quaternion();
+  const _am = new THREE.Matrix4();
+  const _ax = new THREE.Vector3();
+  const _ay = new THREE.Vector3();
+  const _az = new THREE.Vector3();
+  function aimAnkle(ankle: THREE.Group) {
+    _az.copy(fN); // local +z = out of the rock (toe is -z)
+    _ay.copy(fU).addScaledVector(_az, -fU.dot(_az)).normalize();
+    _ax.crossVectors(_ay, _az).normalize();
+    _am.makeBasis(_ax, _ay, _az);
+    _aq.setFromRotationMatrix(_am);
+    ankle.parent!.getWorldQuaternion(_ikPQ);
+    ankle.quaternion.copy(_ikPQ.invert().multiply(_aq));
   }
 
   /** IK the four limbs onto their contacts (or FK where a limb is free). */
@@ -1433,10 +1430,14 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     if (!freeAll) {
       solveTwoBone(rig.armL.shoulder, rig.armL.elbow, rig.armL.l1, rig.armL.l2, contacts.hL.pos, poleL);
       if (!freeArmR) solveTwoBone(rig.armR.shoulder, rig.armR.elbow, rig.armR.l1, rig.armR.l2, contacts.hR.pos, poleR);
-      const kneeL = tmpV.copy(fR).multiplyScalar(-0.9).addScaledVector(fN, 0.55);
-      const kneeR = tmpW.copy(fR).multiplyScalar(0.9).addScaledVector(fN, 0.55);
+      // Knees bend toward the rock and a little outward, like a real stance.
+      const kneeL = tmpV.copy(fN).multiplyScalar(-0.85).addScaledVector(fR, -0.35);
+      const kneeR = tmpW.copy(fN).multiplyScalar(-0.85).addScaledVector(fR, 0.35);
       solveTwoBone(rig.legL.hip, rig.legL.knee, rig.legL.l1, rig.legL.l2, contacts.fL.pos, kneeL);
       solveTwoBone(rig.legR.hip, rig.legR.knee, rig.legR.l1, rig.legR.l2, contacts.fR.pos, kneeR);
+      // Boots stay level with the front points in the wall regardless of the shin.
+      aimAnkle(rig.legL.ankle);
+      aimAnkle(rig.legR.ankle);
     }
   }
 
@@ -1575,6 +1576,8 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         fkArmR(D(120 + 40 * flail), D(40), D(-40), 0.4);
         fkLeg(rig.legL, D(20 - 30 * flail), D(-30), D(-30), 0.4);
         fkLeg(rig.legR, D(20 + 30 * flail), D(30), D(-30), 0.4);
+        rig.legL.ankle.quaternion.slerp(_ikQ.identity(), 0.2);
+        rig.legR.ankle.quaternion.slerp(_ikQ.identity(), 0.2);
         lerpAngle(b, "x", D(38), 0.2);
         lerpAngle(b, "z", D(14 * flail), 0.3);
         lerpAngle(h, "x", D(-40), 0.3);
@@ -1670,7 +1673,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     route.getTangentAt(THREE.MathUtils.clamp(curT, 0.001, 0.999), tangent);
     terrainNormal(wallLocal.x, wallLocal.z, surfN);
     // Hang off the surface by about arm's length; a little further when slipping.
-    const off = phase === "slip" ? 0.95 : phase === "recover" ? 0.78 : 0.62;
+    const off = phase === "slip" ? 0.95 : phase === "recover" ? 0.8 : 0.66;
     rig.root.position.copy(wallLocal).addScaledVector(surfN, off);
     // Basis: face into the rock, "up" along the slope, swing about the normal.
     const upSlope = up.clone().addScaledVector(surfN, -up.dot(surfN)).normalize();
