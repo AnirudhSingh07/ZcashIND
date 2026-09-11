@@ -54,6 +54,15 @@ Numbers that can't be derived from the DB (X followers, Telegram members, wallet
 `config/stats.ts`. Merchants live in `config/merchants.ts`, the team in `config/team.ts`, the college
 club roadmap in `config/clubs.ts`.
 
+## The ZEC climber (homepage hero)
+
+`components/zec-hiker.tsx` + `lib/zec-scene.ts`: a three.js mountaineer on a procedurally generated
+95-degree rock face, driven by the live ZEC price (CoinGecko via `/api/zec-price`, polled every 20s).
+Up climbs, down slips and is caught by the rope, flat rests, chalks up or places protection. The price
+range the wall spans is `site.zecHiker` in `config/site.ts`. Sound is synthesised with the Web Audio API
+and off until the visitor turns it on. Add `?zhdemo=1` to the homepage URL to cycle fake up / flat / down
+prices every 12s and preview every behaviour.
+
 ## Admin
 
 - Visit **`/admin/login`** and enter `ADMIN_PASSWORD` (default `zcashindia` from `.env.example`. **Change it.**)

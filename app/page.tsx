@@ -124,8 +124,7 @@ export default async function HomePage() {
                 priceMax={site.zecHiker.priceMax}
               />
               <p className="mt-2 text-center text-xs text-muted/60 lg:text-right">
-                ZEC price, live every 20 seconds. Up means climbing, down means a slip, flat means
-                anchors and rope checks.
+                The ZEC price, live. The higher it goes, the higher the climb.
               </p>
             </div>
           </div>
