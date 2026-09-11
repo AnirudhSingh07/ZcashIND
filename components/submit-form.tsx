@@ -206,7 +206,7 @@ export function SubmitForm({
             name="title"
             defaultValue={v.title}
             className={inputCls}
-            placeholder="e.g. Chai & Privacy — first meetup in Indore"
+            placeholder="e.g. Chai & Privacy: first meetup in Indore"
           />
           <Err msg={e.title} />
         </div>
@@ -239,7 +239,7 @@ export function SubmitForm({
             defaultValue={v.summary}
             rows={4}
             className={inputCls}
-            placeholder="Real talk — what came up, what clicked, what surprised people. Not a photo-op."
+            placeholder="Real talk: what came up, what clicked, what surprised people. Not a photo-op."
           />
           <Err msg={e.summary} />
         </div>

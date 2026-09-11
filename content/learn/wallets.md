@@ -1,7 +1,7 @@
 ---
 title: "Wallets"
 hindi: "वॉलेट"
-description: "Mobile-first shielded wallets — Zashi, Zodl and Zingo. Official sources only."
+description: "Mobile-first shielded wallets: Zashi, Zodl and Zingo. Official sources only."
 order: 4
 ---
 
@@ -9,7 +9,7 @@ order: 4
 
 ## The golden rules
 
-- **Download only from official sources** — the wallet's own website, the Apple App Store, or Google Play. Never from a link someone DMs you.
+- **Download only from official sources**: the wallet's own website, the Apple App Store, or Google Play. Never from a link someone DMs you.
 - **We never ask for your seed.** No one legitimate ever will. Zcash India will never DM you asking for your seed phrase, private keys, or money.
 - **Your seed phrase is your money.** Write it on paper, store it offline, never type it into a website.
 
@@ -28,7 +28,7 @@ Any of these will get you a Unified Address and shielded payments. Start with on
 1. Install the wallet from its official source.
 2. Create a new wallet. The app shows you a **seed phrase** (a list of words).
 3. Write the seed phrase on paper, in order. Store it somewhere safe and private.
-4. Confirm the seed in the app. Done — you have a shielded Zcash wallet.
+4. Confirm the seed in the app. Done. You have a shielded Zcash wallet.
 
 ## Getting your first ZEC
 

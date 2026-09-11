@@ -22,7 +22,7 @@ export async function generateMetadata({
   const summary = await getCity(city);
   const name = summary?.city ?? city.replace(/-/g, " ");
   return {
-    title: `${name} — Zcash India`,
+    title: `${name} on the Zcash India map`,
     description: `Zcash India meetups and nodes in ${name}.`,
   };
 }
@@ -50,7 +50,7 @@ export default async function CityPage({
             <h1 className="mt-4 text-2xl font-bold capitalize">{displayName}</h1>
             <p className="mt-3 text-lg text-gold">This city needs a host.</p>
             <p className="mt-2 text-muted">
-              There's no verified Zcash India meetup here yet. Be the first —
+              There's no verified Zcash India meetup here yet. Be the first.
               light up {displayName} on the map.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">

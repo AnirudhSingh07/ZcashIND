@@ -1,11 +1,11 @@
 ---
 title: "Why privacy matters in India"
 hindi: "भारत में निजता क्यों मायने रखती है"
-description: "Remittances, freelancers, students, merchants — privacy is ordinary."
+description: "Remittances, freelancers, students, merchants. Privacy is ordinary."
 order: 6
 ---
 
-::lead Financial privacy isn't about hiding. It's the same everyday dignity you already expect — applied to money. Here's why it matters for real people in India.
+::lead Financial privacy isn't about hiding. It's the same everyday dignity you already expect, applied to money. Here's why it matters for real people in India.
 
 ## Remittances
 
@@ -13,7 +13,7 @@ Millions of families in India receive money from relatives working abroad. Every
 
 ## Freelancers and creators
 
-If you do cross-border work — design, code, writing, content — you often receive payments from clients around the world. Shielded payments mean your rates, your client list, and your running balance aren't broadcast publicly for competitors or scrapers to read.
+If you do cross-border work (design, code, writing, content) you often receive payments from clients around the world. Shielded payments mean your rates, your client list, and your running balance aren't broadcast publicly for competitors or scrapers to read.
 
 ## Students
 
@@ -29,6 +29,6 @@ Privacy is the default in most of life. You don't announce your salary. You don'
 
 ## What this is not
 
-This community does **not** help anyone evade the law, launder funds, or dodge taxes. We teach a legitimate tool for ordinary privacy, nothing more. If you need tax or legal guidance, talk to a qualified professional — this is not financial or legal advice.
+This community does **not** help anyone evade the law, launder funds, or dodge taxes. We teach a legitimate tool for ordinary privacy, nothing more. If you need tax or legal guidance, talk to a qualified professional. This is not financial or legal advice.
 
 Next: [Glossary →](/learn/glossary)

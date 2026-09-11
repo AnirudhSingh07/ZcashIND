@@ -11,13 +11,13 @@ Zcash India is a community, not a company. We won't ask you to buy anything, con
 
 ## The two ideas
 
-1. **Money can be private.** With most digital payments, someone — a bank, an app, a chain explorer — can see who paid whom and how much. Zcash lets you send **shielded** payments where those details stay between you and the person you paid.
+1. **Money can be private.** With most digital payments, someone (a bank, an app, a chain explorer) can see who paid whom and how much. Zcash lets you send **shielded** payments where those details stay between you and the person you paid.
 2. **Privacy is normal.** You close the door when you talk to your doctor. You don't publish your salary. Financial privacy is the same ordinary thing, for money.
 
 ## Your two actions
 
-1. **Read [What is Zcash?](/learn/what-is-zcash)** — two minutes on how it actually works.
-2. **[Get a shielded wallet](/learn/wallets)** — install Zashi or Zingo from an official source and back up your seed.
+1. **Read [What is Zcash?](/learn/what-is-zcash)**: two minutes on how it actually works.
+2. **[Get a shielded wallet](/learn/wallets)**: install Zashi or Zingo from an official source and back up your seed.
 
 ## Then
 

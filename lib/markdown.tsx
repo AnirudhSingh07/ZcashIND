@@ -2,7 +2,7 @@ import React from "react";
 
 /**
  * A small, dependency-free markdown renderer covering the constructs used in
- * /content: headings, paragraphs, unordered/ordered lists, blockquotes,
+ * /content: headings, paragraphs, unordered/ordered lists, blockquotes, tables,
  * horizontal rules, bold, inline code, and links. Good enough for MVP content;
  * swap for full MDX later if needed.
  */
@@ -77,6 +77,51 @@ export function Markdown({ source }: { source: string }) {
       continue;
     }
 
+    // Table: a header row, a |---| separator row, then body rows.
+    if (
+      line.trim().startsWith("|") &&
+      i + 1 < lines.length &&
+      /^\|?\s*:?-{2,}/.test(lines[i + 1].trim())
+    ) {
+      const splitRow = (row: string) =>
+        row
+          .trim()
+          .replace(/^\|/, "")
+          .replace(/\|$/, "")
+          .split("|")
+          .map((c) => c.trim());
+      const header = splitRow(line);
+      i += 2; // skip header + separator
+      const body: string[][] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        body.push(splitRow(lines[i]));
+        i++;
+      }
+      blocks.push(
+        <div key={key++} className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                {header.map((h, idx) => (
+                  <th key={idx}>{renderInline(h, `th${key}-${idx}`)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {body.map((row, r) => (
+                <tr key={r}>
+                  {row.map((cell, c) => (
+                    <td key={c}>{renderInline(cell, `td${key}-${r}-${c}`)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
+      );
+      continue;
+    }
+
     // Blockquote
     if (line.startsWith(">")) {
       const buf: string[] = [];
@@ -135,6 +180,7 @@ export function Markdown({ source }: { source: string }) {
       !/^[-*]\s+/.test(lines[i]) &&
       !/^\d+\.\s+/.test(lines[i]) &&
       !lines[i].startsWith(">") &&
+      !lines[i].trim().startsWith("|") &&
       !/^---+$/.test(lines[i].trim())
     ) {
       para.push(lines[i]);

@@ -1,31 +1,123 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
-const NAV = [
+type NavLink = { href: string; label: string; external?: boolean; desc?: string };
+
+const NAV: NavLink[] = [
   { href: "/learn", label: "Learn" },
   { href: "/map", label: "Map" },
   { href: "/events", label: "Events" },
-  { href: "/bounties/irl", label: "Bounties" },
-  { href: "/ecosystem", label: "Ecosystem" },
-  { href: "/contribute", label: "Contribute" },
+  { href: "/bounties", label: "Bounties" },
+  { href: "/clubs", label: "Clubs" },
 ];
 
-const COMMUNITY = [
-  { href: site.links.telegram, label: "Telegram" },
-  { href: site.links.x, label: "X" },
-  { href: site.links.instagram, label: "Instagram" },
+const ECOSYSTEM: NavLink[] = [
+  { href: "/pay", label: "Pay with ZEC", desc: "Indian businesses that accept Zcash" },
+  { href: "/contributors", label: "Contributors", desc: "The people making it happen" },
+  { href: "/ecosystem", label: "Ecosystem overview", desc: "Protocol, tools, governance" },
+  { href: "/updates", label: "What's new", desc: "Milestones and announcements" },
+  { href: site.links.zecmap, label: "ZecMap", external: true },
+  { href: site.links.zechub, label: "ZecHub", external: true },
 ];
+
+const COMMUNITY: NavLink[] = [
+  { href: site.links.telegram, label: "Telegram", external: true },
+  { href: site.links.x, label: "X", external: true },
+  { href: site.links.youtube, label: "YouTube", external: true },
+  { href: site.links.instagram, label: "Instagram", external: true },
+];
+
+function Dropdown({
+  label,
+  items,
+  active,
+}: {
+  label: string;
+  items: NavLink[];
+  active?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onClick);
+    };
+  }, [open]);
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        className={cn(
+          "rounded-full px-3 py-1.5 text-sm transition-colors hover:text-gold",
+          active ? "text-gold" : "text-muted",
+        )}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        {label} ▾
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full w-64 overflow-hidden rounded-2xl border border-line bg-surface py-1 shadow-xl"
+        >
+          {items.map((c) =>
+            c.external ? (
+              <a
+                key={c.href}
+                role="menuitem"
+                href={c.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-4 py-2 text-sm text-muted hover:bg-surface-2 hover:text-gold"
+              >
+                {c.label} ↗
+              </a>
+            ) : (
+              <Link
+                key={c.href}
+                role="menuitem"
+                href={c.href}
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 hover:bg-surface-2"
+              >
+                <span className="block text-sm text-text">{c.label}</span>
+                {c.desc && <span className="block text-xs text-muted">{c.desc}</span>}
+              </Link>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const [community, setCommunity] = useState(false);
   const pathname = usePathname();
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-bg/90 backdrop-blur">
@@ -35,53 +127,25 @@ export function Header() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(item.href + "/");
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-sm transition-colors hover:text-gold",
-                  active ? "text-gold" : "text-muted",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-
-          {/* Community dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={() => setCommunity(true)}
-            onMouseLeave={() => setCommunity(false)}
-          >
-            <button
-              className="rounded-full px-3 py-1.5 text-sm text-muted transition-colors hover:text-gold"
-              onClick={() => setCommunity((v) => !v)}
-              aria-expanded={community}
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-sm transition-colors hover:text-gold",
+                isActive(item.href) ? "text-gold" : "text-muted",
+              )}
             >
-              Community ▾
-            </button>
-            {community && (
-              <div className="absolute right-0 top-full w-44 overflow-hidden rounded-2xl border border-line bg-surface py-1 shadow-xl">
-                {COMMUNITY.map((c) => (
-                  <a
-                    key={c.href}
-                    href={c.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block px-4 py-2 text-sm text-muted hover:bg-surface-2 hover:text-gold"
-                  >
-                    {c.label}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
+              {item.label}
+            </Link>
+          ))}
+          <Dropdown
+            label="Ecosystem"
+            items={ECOSYSTEM}
+            active={ECOSYSTEM.some((i) => !i.external && isActive(i.href))}
+          />
+          <Dropdown label="Community" items={COMMUNITY} />
 
           <LanguageSwitcher />
 
@@ -109,22 +173,49 @@ export function Header() {
 
       {/* Mobile menu */}
       {open && (
-        <div className="border-t border-line bg-surface px-4 py-3 md:hidden">
-          <nav className="flex flex-col gap-1">
+        <div className="max-h-[80vh] overflow-y-auto border-t border-line bg-surface px-4 py-3 md:hidden">
+          <nav className="flex flex-col gap-1" aria-label="Main">
             {NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2 text-muted hover:bg-surface-2 hover:text-gold"
+                className={cn(
+                  "rounded-lg px-3 py-2 hover:bg-surface-2 hover:text-gold",
+                  isActive(item.href) ? "text-gold" : "text-muted",
+                )}
               >
                 {item.label}
               </Link>
             ))}
+
             <div className="my-2 border-t border-line" />
-            <p className="px-3 pb-1 text-xs uppercase tracking-wide text-muted/60">
-              Community
-            </p>
+            <p className="px-3 pb-1 text-xs uppercase tracking-wide text-muted/60">Ecosystem</p>
+            {ECOSYSTEM.map((c) =>
+              c.external ? (
+                <a
+                  key={c.href}
+                  href={c.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg px-3 py-2 text-muted hover:bg-surface-2 hover:text-gold"
+                >
+                  {c.label} ↗
+                </a>
+              ) : (
+                <Link
+                  key={c.href}
+                  href={c.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-2 text-muted hover:bg-surface-2 hover:text-gold"
+                >
+                  {c.label}
+                </Link>
+              ),
+            )}
+
+            <div className="my-2 border-t border-line" />
+            <p className="px-3 pb-1 text-xs uppercase tracking-wide text-muted/60">Community</p>
             {COMMUNITY.map((c) => (
               <a
                 key={c.href}
@@ -133,7 +224,7 @@ export function Header() {
                 rel="noopener noreferrer"
                 className="rounded-lg px-3 py-2 text-muted hover:bg-surface-2 hover:text-gold"
               >
-                {c.label}
+                {c.label} ↗
               </a>
             ))}
             <Link

@@ -5,7 +5,7 @@ import { Container, Section, ButtonLink, Badge } from "@/components/ui";
 import { site } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "Learn — financial privacy for India",
+  title: "Learn: financial privacy for India",
   description:
     "Short, plain-language lessons on Zcash and financial privacy, written for India.",
 };

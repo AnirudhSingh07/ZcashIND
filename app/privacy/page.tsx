@@ -23,8 +23,8 @@ export default function PrivacyPage() {
           <ul>
             <li>
               <strong>Meetup submissions.</strong> When you submit a meetup, we
-              store what you enter — including your photos and a private contact
-              method — so our team can review it.
+              store what you enter, including your photos and a private contact
+              method, so our team can review it.
             </li>
             <li>
               <strong>Nothing else by default.</strong> No accounts, no wallet
@@ -42,8 +42,8 @@ export default function PrivacyPage() {
 
           <h2>What appears publicly</h2>
           <p>
-            If your meetup is verified, its public details — city, title, date,
-            attendee counts, your chosen public host name, and photos — appear on
+            If your meetup is verified, its public details (city, title, date,
+            attendee counts, your chosen public host name, and photos) appear on
             the map. Your private contact does not.
           </p>
 

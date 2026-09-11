@@ -5,6 +5,8 @@ import { Container, Section, Badge, ButtonLink } from "@/components/ui";
 import { BountyPrizes } from "@/components/bounty-prizes";
 import { JudgingBars } from "@/components/judging-bars";
 import { Leaderboard } from "@/components/leaderboard";
+import { ShareButton } from "@/components/share-button";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "IRL Meetup Bounty",
@@ -59,10 +61,13 @@ export default async function IrlBountyPage() {
   return (
     <Section className="py-8">
       <Container>
+        <Link href="/bounties" className="text-sm text-gold hover:underline">
+          ← All bounties
+        </Link>
         {/* Hero */}
-        <div className="max-w-2xl">
+        <div className="mt-6 max-w-2xl">
           <Badge tone="success" className="mb-4">
-            IRL Meetup Bounty
+            ● Open now: {bounty.title}
           </Badge>
           <h1 className="text-4xl font-bold sm:text-5xl">
             {site.voice.putCityOnMap}
@@ -78,6 +83,11 @@ export default async function IrlBountyPage() {
             <ButtonLink href="/host" variant="ghost">
               Get the host kit
             </ButtonLink>
+            <ShareButton
+              title={`${bounty.title} | Zcash India Bounty`}
+              text={`$${bounty.prizePoolUsd} in ZEC for hosting a real Zcash meetup.`}
+              path="/bounties/irl"
+            />
           </div>
         </div>
 
@@ -105,7 +115,7 @@ export default async function IrlBountyPage() {
           </div>
           <p className="mt-4 text-sm text-muted">
             Plus: Zcash / Zcash India branding visible in a photo, and a real
-            conversation — not a photo-op.
+            conversation, not a photo-op.
           </p>
         </div>
 

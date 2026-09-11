@@ -68,7 +68,7 @@ function popupHtml(m: MapMeetup): string {
   const official = m.kind === "official_event";
   const label = official
     ? m.title
-    : `${m.city} — Zcash IRL Node #${padNode(m.nodeNumber)}`;
+    : `${m.city}, Zcash IRL Node #${padNode(m.nodeNumber)}`;
   const photo = m.photos?.[0];
   const cityHref = `/map/${m.city.toLowerCase().replace(/\s+/g, "-")}`;
   return `
@@ -79,13 +79,13 @@ function popupHtml(m: MapMeetup): string {
           : ""
       }
       <div style="padding:12px 14px">
-        <div style="font-weight:600;font-size:14px;margin-bottom:6px;color:#F5F2EA">${label}</div>
-        <div style="font-size:13px;color:#D9D8D6;line-height:1.5">
+        <div style="font-weight:600;font-size:14px;margin-bottom:6px;color:#191510">${label}</div>
+        <div style="font-size:13px;color:#6a6252;line-height:1.5">
           👥 ${m.attendeesTotal} attendees<br/>
           🌱 ${m.attendeesNewToZcash} new to Zcash
           ${m.hostNamePublic ? `<br/>🟢 Hosted by ${m.hostNamePublic}` : ""}
         </div>
-        <a href="${cityHref}" style="display:inline-block;margin-top:10px;color:#F4B728;font-size:13px;font-weight:600;text-decoration:none">View ${m.city} →</a>
+        <a href="${cityHref}" style="display:inline-block;margin-top:10px;color:#8a5e12;font-size:13px;font-weight:600;text-decoration:none">View ${m.city} →</a>
       </div>
     </div>`;
 }

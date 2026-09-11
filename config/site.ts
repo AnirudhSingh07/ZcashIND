@@ -31,7 +31,12 @@ export const site = {
     zecmap: "https://zecmap.com/map",
     zecmapAdd: "https://zecmap.com/add",
     zcash: "https://z.cash/",
-    donation: "#", // donation placeholder — wire up in Phase 2
+    donation: "", // empty = "coming soon" in the footer; set a shielded address URL when ready
+    lightClientStatus: "https://status.openlightnodes.org/status/status",
+    lightClientSource: "https://github.com/jatinsahijwani/openlightnodes",
+    zodlHindiPr: "https://github.com/zodl-inc/zodl-android/pull/2453",
+    ironwood: "https://z.cash/upgrade/ironwood/",
+    forumReport: "https://forum.zcashcommunity.com/t/zcash-india-2026/54762",
   },
 
   // Luma events. The profile can't be iframed (SAMEORIGIN), so we link out to it
@@ -47,14 +52,14 @@ export const site = {
   // Bounty campaign config.
   bounty: {
     period: "2026-09",
-    windowLabel: "Bounty window: September 2026 (confirm dates)",
+    windowLabel: "Bounty window: September 2026",
     prizePoolUsd: 150,
     prizes: [
       { place: "1st", amountUsd: 40, note: "Best meetup overall" },
       { place: "2nd", amountUsd: 25, note: "Runner-up" },
       { place: "3rd", amountUsd: 20, note: "Third place" },
-      { place: "Outstanding ×5", amountUsd: 10, note: "5 outstanding meetups" },
-      { place: "New-city ×5", amountUsd: 3, note: "5 new-city activations" },
+      { place: "Outstanding x5", amountUsd: 10, note: "5 outstanding meetups" },
+      { place: "New-city x5", amountUsd: 3, note: "5 new-city activations" },
     ],
     minimums: {
       attendees: 4,
@@ -63,10 +68,10 @@ export const site = {
       photos: 3,
     },
     judging: [
-      { label: "Impact", weight: 30 },
-      { label: "Attendance", weight: 20 },
-      { label: "Quality", weight: 20 },
-      { label: "Geographic reach", weight: 15 },
+      { label: "Community impact", weight: 30 },
+      { label: "Attendance & reach", weight: 20 },
+      { label: "Meetup quality", weight: 20 },
+      { label: "Geographic impact", weight: 15 },
       { label: "Documentation", weight: 15 },
     ],
   },

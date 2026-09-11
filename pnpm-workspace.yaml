@@ -1,13 +1,9 @@
+packages:
+  - "."
 verifyDepsBeforeRun: false
 onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
+  - "@prisma/client"
+  - "@prisma/engines"
   - prisma
   - esbuild
   - sharp
-allowBuilds:
-  '@prisma/client': set this to true or false
-  '@prisma/engines': set this to true or false
-  esbuild: set this to true or false
-  prisma: set this to true or false
-  sharp: set this to true or false

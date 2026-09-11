@@ -90,6 +90,15 @@ model Contributor {
   x        String?
   avatar   String?
   official Boolean @default(false)
+  xHandle  String? // without the @
+  role     String? // e.g. "Community host", "Media Lead"
+
+  // Manual stats (used when the contributor's meetups aren't in the DB yet).
+  meetupsHosted Int @default(0)
+  peopleReached Int @default(0)
+  newToZcash    Int @default(0)
+  // JSON string array of bounty wins / notable contributions.
+  highlights String @default("[]")
 
   meetups Meetup[]
 
@@ -124,24 +133,80 @@ model Update {
   @@index([createdAt])
 }
 
-/// Bounty cycle config (admin-managed). One row per period; the `active` one
-/// drives the /bounties/irl page, prizes, judging, minimums and submit form.
+/// A bounty. Every bounty gets a public page at /bounties/<slug>. The row with
+/// kind = "irl_meetup" and active = true also drives /bounties/irl, its prize
+/// table, judging bars, minimums and the submit form.
 /// `prizes` and `judging` are stored as JSON strings.
 model Bounty {
-  id            String   @id @default(cuid())
-  period        String   @unique // e.g. "2026-09"
-  windowLabel   String
-  prizePoolUsd  Int      @default(0)
-  prizes        String   @default("[]") // JSON: [{ place, amountUsd, note }]
-  minAttendees  Int      @default(4)
-  minNewToZcash Int      @default(2)
-  minMinutes    Int      @default(20)
-  minPhotos     Int      @default(3)
-  judging       String   @default("[]") // JSON: [{ label, weight }]
-  active        Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id     String @id @default(cuid())
+  slug   String @unique
+  title  String
+  // kind: irl_meetup | mini_meetup | content | meme | video | explainer
+  kind   String @default("content")
+  // status: active | completed
+  status String @default("active")
 
+  description     String? // markdown
+  format          String? // one line: what kind of submissions
+  rules           String? // markdown
+  topics          String? // comma separated
+  acceptedFormats String? // comma separated
+
+  startDate DateTime
+  endDate   DateTime?
+
+  announcementUrl       String?
+  winnerAnnouncementUrl String?
+  submissionCount       Int     @default(0)
+  winnerCount           Int     @default(0)
+
+  prizePoolUsd Int    @default(0)
+  currency     String @default("ZEC")
+  prizes       String @default("[]") // JSON: [{ place, amountUsd, note }]
+
+  // IRL meetup config (only meaningful for kind = irl_meetup).
+  period        String? // e.g. "2026-09"
+  windowLabel   String?
+  minAttendees  Int     @default(4)
+  minNewToZcash Int     @default(2)
+  minMinutes    Int     @default(20)
+  minPhotos     Int     @default(3)
+  judging       String  @default("[]") // JSON: [{ label, weight }]
+  active        Boolean @default(false)
+
+  winners     BountyWinner[]
+  submissions BountySubmission[]
+
+  createdAt DateTime @default(now())
+
+  @@index([status])
   @@index([active])
+  @@index([startDate])
+}
+
+model BountyWinner {
+  id            String  @id @default(cuid())
+  bountyId      String
+  bounty        Bounty  @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  xHandle       String
+  // e.g. "1st", "2nd", "3rd", "Honorable mention", "Successful host", "Community pick"
+  place         String
+  prizeUsd      Int
+  submissionUrl String?
+  sortOrder     Int     @default(0)
+
+  @@index([bountyId])
+}
+
+model BountySubmission {
+  id       String  @id @default(cuid())
+  bountyId String
+  bounty   Bounty  @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  xHandle  String?
+  url      String
+  sortOrder Int    @default(0)
+
+  @@index([bountyId])
 }
 
 /// Community events synced from Luma (admin-managed). Single source of truth for
@@ -159,6 +224,10 @@ model LumaEvent {
   coHosts   String?
   lat       Float?
   lng       Float?
+  attendees Int?    // headcount, when known
+  note      String? // e.g. "150+ new Zodl wallets"
+  topics    String? // comma separated
+  xUrl      String? // recap / thread on X
   createdAt DateTime @default(now())
 
   @@index([startsAt])

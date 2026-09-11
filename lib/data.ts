@@ -101,6 +101,10 @@ export async function getLumaEvents(): Promise<LumaEvent[]> {
     coHosts: r.coHosts ?? undefined,
     lat: r.lat ?? undefined,
     lng: r.lng ?? undefined,
+    attendees: r.attendees ?? undefined,
+    note: r.note ?? undefined,
+    topics: r.topics ?? undefined,
+    xUrl: r.xUrl ?? undefined,
   }));
 }
 
@@ -274,11 +278,52 @@ export async function getLeaderboard(period: string) {
   return rows.map(toPublic);
 }
 
-export async function getContributors() {
-  return prisma.contributor.findMany({
+export type PublicContributor = {
+  id: string;
+  slug: string;
+  name: string;
+  bio: string | null;
+  city: string | null;
+  telegram: string | null;
+  x: string | null;
+  xHandle: string | null;
+  avatar: string | null;
+  official: boolean;
+  role: string | null;
+  meetupsHosted: number;
+  peopleReached: number;
+  newToZcash: number;
+  highlights: string[];
+};
+
+function toPublicContributor(
+  c: NonNullable<Awaited<ReturnType<typeof prisma.contributor.findFirst>>>,
+): PublicContributor {
+  return {
+    id: c.id,
+    slug: c.slug,
+    name: c.name,
+    bio: c.bio,
+    city: c.city,
+    telegram: c.telegram,
+    x: c.x,
+    xHandle: c.xHandle,
+    avatar: c.avatar,
+    official: c.official,
+    role: c.role,
+    meetupsHosted: c.meetupsHosted,
+    peopleReached: c.peopleReached,
+    newToZcash: c.newToZcash,
+    highlights: safeJson<string[]>(c.highlights, []),
+  };
+}
+
+export async function getContributors(): Promise<PublicContributor[]> {
+  const rows = await prisma.contributor.findMany({
     where: { official: true },
-    orderBy: { name: "asc" },
+    orderBy: { createdAt: "asc" },
   });
+  return rows.map(toPublicContributor);
 }
 
 export async function getContributor(slug: string) {
@@ -288,7 +333,7 @@ export async function getContributor(slug: string) {
     where: { hostContributorId: c.id, status: "verified" },
     orderBy: { startsAt: "desc" },
   });
-  return { contributor: c, meetups: meetups.map(toPublic) };
+  return { contributor: toPublicContributor(c), meetups: meetups.map(toPublic) };
 }
 
 /** Next official upcoming event. */
@@ -337,17 +382,64 @@ export async function getUpdates(): Promise<PublicUpdate[]> {
   }));
 }
 
-// --- Bounty ---------------------------------------------------------------
+// --- Bounties -------------------------------------------------------------
 
 export type BountyPrize = { place: string; amountUsd: number; note: string };
 export type BountyJudging = { label: string; weight: number };
+
+/** The IRL bounty config consumed by /bounties/irl and the submit form. */
 export type Bounty = {
+  slug: string;
+  title: string;
   period: string;
   windowLabel: string;
   prizePoolUsd: number;
   prizes: BountyPrize[];
   minimums: { attendees: number; newToZcash: number; minutes: number; photos: number };
   judging: BountyJudging[];
+};
+
+export type PublicBountyWinner = {
+  id: string;
+  xHandle: string;
+  place: string;
+  prizeUsd: number;
+  submissionUrl: string | null;
+};
+
+export type PublicBountySubmission = {
+  id: string;
+  xHandle: string | null;
+  url: string;
+};
+
+export type PublicBounty = {
+  id: string;
+  slug: string;
+  title: string;
+  kind: string;
+  status: "active" | "completed";
+  description: string | null;
+  format: string | null;
+  rules: string | null;
+  topics: string[];
+  acceptedFormats: string[];
+  startDate: string;
+  endDate: string | null;
+  announcementUrl: string | null;
+  winnerAnnouncementUrl: string | null;
+  submissionCount: number;
+  winnerCount: number;
+  prizePoolUsd: number;
+  currency: string;
+  prizes: BountyPrize[];
+  period: string | null;
+  windowLabel: string | null;
+  minimums: { attendees: number; newToZcash: number; minutes: number; photos: number };
+  judging: BountyJudging[];
+  active: boolean;
+  winners: PublicBountyWinner[];
+  submissions: PublicBountySubmission[];
 };
 
 function safeJson<T>(s: string, fallback: T): T {
@@ -359,20 +451,110 @@ function safeJson<T>(s: string, fallback: T): T {
   }
 }
 
+const splitList = (s: string | null | undefined) =>
+  (s ?? "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+type BountyRow = NonNullable<Awaited<ReturnType<typeof prisma.bounty.findFirst>>>;
+type BountyWithRels = BountyRow & {
+  winners?: { id: string; xHandle: string; place: string; prizeUsd: number; submissionUrl: string | null }[];
+  submissions?: { id: string; xHandle: string | null; url: string }[];
+};
+
+function toPublicBounty(r: BountyWithRels): PublicBounty {
+  return {
+    id: r.id,
+    slug: r.slug,
+    title: r.title,
+    kind: r.kind,
+    status: r.status === "completed" ? "completed" : "active",
+    description: r.description,
+    format: r.format,
+    rules: r.rules,
+    topics: splitList(r.topics),
+    acceptedFormats: splitList(r.acceptedFormats),
+    startDate: r.startDate.toISOString(),
+    endDate: r.endDate ? r.endDate.toISOString() : null,
+    announcementUrl: r.announcementUrl,
+    winnerAnnouncementUrl: r.winnerAnnouncementUrl,
+    submissionCount: r.submissionCount,
+    winnerCount: r.winnerCount,
+    prizePoolUsd: r.prizePoolUsd,
+    currency: r.currency,
+    prizes: safeJson<BountyPrize[]>(r.prizes, []),
+    period: r.period,
+    windowLabel: r.windowLabel,
+    minimums: {
+      attendees: r.minAttendees,
+      newToZcash: r.minNewToZcash,
+      minutes: r.minMinutes,
+      photos: r.minPhotos,
+    },
+    judging: safeJson<BountyJudging[]>(r.judging, []),
+    active: r.active,
+    winners: (r.winners ?? []).map((w) => ({
+      id: w.id,
+      xHandle: w.xHandle,
+      place: w.place,
+      prizeUsd: w.prizeUsd,
+      submissionUrl: w.submissionUrl,
+    })),
+    submissions: (r.submissions ?? []).map((s) => ({
+      id: s.id,
+      xHandle: s.xHandle,
+      url: s.url,
+    })),
+  };
+}
+
+/** All bounties: active first, then completed, newest first within each. */
+export async function getBounties(): Promise<PublicBounty[]> {
+  const rows = await prisma.bounty.findMany({
+    orderBy: { startDate: "desc" },
+    include: {
+      winners: { orderBy: { sortOrder: "asc" } },
+      submissions: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+  const all = rows.map(toPublicBounty);
+  return [
+    ...all.filter((b) => b.status === "active"),
+    ...all.filter((b) => b.status === "completed"),
+  ];
+}
+
+export async function getBountyBySlug(slug: string): Promise<PublicBounty | null> {
+  const row = await prisma.bounty.findUnique({
+    where: { slug },
+    include: {
+      winners: { orderBy: { sortOrder: "asc" } },
+      submissions: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+  return row ? toPublicBounty(row) : null;
+}
+
 /**
- * The current bounty config, DB-first with config fallback.
- * Uses the active DB row (or the most recent one); if none exist, falls back to
- * `site.bounty` from config so the bounty pages always render.
+ * The active IRL meetup bounty config, DB-first with config fallback.
+ * Drives /bounties/irl, the prize table, judging bars, minimums and the
+ * submit form. Falls back to `site.bounty` so those pages always render.
  */
 export async function getBounty(): Promise<Bounty> {
   const row =
-    (await prisma.bounty.findFirst({ where: { active: true } })) ??
-    (await prisma.bounty.findFirst({ orderBy: { createdAt: "desc" } }));
+    (await prisma.bounty.findFirst({ where: { kind: "irl_meetup", active: true } })) ??
+    (await prisma.bounty.findFirst({
+      where: { kind: "irl_meetup" },
+      orderBy: { startDate: "desc" },
+    }));
 
   if (!row) {
     const { site } = await import("@/config/site");
     const b = site.bounty;
     return {
+      slug: "irl",
+      title: "IRL Meetup Bounty",
       period: b.period,
       windowLabel: b.windowLabel,
       prizePoolUsd: b.prizePoolUsd,
@@ -382,18 +564,16 @@ export async function getBounty(): Promise<Bounty> {
     };
   }
 
+  const pub = toPublicBounty(row);
   return {
-    period: row.period,
-    windowLabel: row.windowLabel,
-    prizePoolUsd: row.prizePoolUsd,
-    prizes: safeJson<BountyPrize[]>(row.prizes, []),
-    minimums: {
-      attendees: row.minAttendees,
-      newToZcash: row.minNewToZcash,
-      minutes: row.minMinutes,
-      photos: row.minPhotos,
-    },
-    judging: safeJson<BountyJudging[]>(row.judging, []),
+    slug: pub.slug,
+    title: pub.title,
+    period: pub.period ?? pub.startDate.slice(0, 7),
+    windowLabel: pub.windowLabel ?? "",
+    prizePoolUsd: pub.prizePoolUsd,
+    prizes: pub.prizes,
+    minimums: pub.minimums,
+    judging: pub.judging,
   };
 }
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { site } from "@/config/site";
 import { media } from "@/config/media";
+import { siteStats, roundedPlus } from "@/config/stats";
 import { lumaUrl } from "@/config/luma-events";
 import {
   getCounters,
@@ -10,6 +11,7 @@ import {
   getFeaturedPosts,
   getLumaEvents,
   getUpdates,
+  getBounties,
 } from "@/lib/data";
 import { formatDateIST, formatIST } from "@/lib/utils";
 import {
@@ -26,12 +28,12 @@ import { YouTubeVideos } from "@/components/social/youtube-videos";
 import { getYouTubeVideos } from "@/lib/youtube";
 
 export const metadata: Metadata = {
-  title: `${site.name} — ${site.tagline}`,
+  title: `${site.name}: ${site.tagline}`,
   description: site.description,
 };
 
 export default async function HomePage() {
-  const [counters, cities, featuredPosts, lumaEvents, youtubeVideos, updates] =
+  const [counters, cities, featuredPosts, lumaEvents, youtubeVideos, updates, bounties] =
     await Promise.all([
       getCounters(),
       getCities(),
@@ -39,9 +41,12 @@ export default async function HomePage() {
       getLumaEvents(),
       getYouTubeVideos(3),
       getUpdates(),
+      getBounties(),
     ]);
   const recentUpdates = updates.slice(0, 3);
   const recentEvents = lumaEvents.slice(0, 3);
+  const openBounties = bounties.filter((b) => b.status === "active");
+  const cityNames = cities.map((c) => c.city);
 
   return (
     <>
@@ -61,13 +66,15 @@ export default async function HomePage() {
           <div className="max-w-2xl py-20 sm:py-28">
             <div className="mb-5 flex flex-wrap items-center gap-2">
               <Badge tone="gold">🇮🇳 Official community</Badge>
-              <Badge tone="muted">Since 2026 · 6 cities</Badge>
+              <Badge tone="muted">
+                Since {siteStats.since} · {counters.citiesLit} {counters.citiesLit === 1 ? "city" : "cities"}
+              </Badge>
             </div>
             <h1 className="display text-5xl leading-[0.98] sm:text-7xl">
               The home of <span className="text-gold">Zcash</span> in India.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-muted">
-              A grassroots community learning financial privacy together — real
+              A grassroots community learning financial privacy together: real
               meetups on real campuses, an online Live series, and a growing map
               of cities. {site.voice.oneAtATime}
             </p>
@@ -117,9 +124,35 @@ export default async function HomePage() {
           <Stat value={counters.citiesLit} label="Cities across India" accent />
           <Stat value={counters.eventsHosted} label="Events hosted" accent />
           <Stat value={counters.onlineSessions} label="Online sessions" />
-          <Stat value="1,500+" label="Community on X" />
+          <Stat value={roundedPlus(siteStats.xFollowers)} label="Community on X" />
         </div>
       </Container>
+
+      {/* ---------- Open bounties ---------- */}
+      {openBounties.length > 0 && (
+        <Container className="mt-6">
+          <div className="card flex flex-col gap-3 border-gold/40 p-4 sm:flex-row sm:items-center sm:gap-6">
+            <Badge tone="success" className="shrink-0">
+              ● {openBounties.length} {openBounties.length === 1 ? "bounty" : "bounties"} open
+            </Badge>
+            <div className="flex min-w-0 flex-1 flex-wrap gap-x-6 gap-y-1 text-sm">
+              {openBounties.map((b) => (
+                <Link
+                  key={b.id}
+                  href={b.kind === "irl_meetup" && b.active ? "/bounties/irl" : `/bounties/${b.slug}`}
+                  className="hover:text-gold"
+                >
+                  <span className="font-medium">{b.title}</span>
+                  <span className="text-muted"> · ${b.prizePoolUsd} in ZEC</span>
+                </Link>
+              ))}
+            </div>
+            <Link href="/bounties" className="shrink-0 text-sm text-gold hover:underline">
+              All bounties
+            </Link>
+          </div>
+        </Container>
+      )}
 
       {/* ---------- Start in 15 minutes ---------- */}
       <Section>
@@ -134,7 +167,7 @@ export default async function HomePage() {
               {
                 n: "1",
                 t: "Understand shielded money",
-                d: "Two minutes on what Zcash protects — who can see a payment and who can't.",
+                d: "Two minutes on what Zcash protects: who can see a payment and who can't.",
                 href: "/learn/what-is-zcash",
               },
               {
@@ -175,7 +208,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="Events"
             title="What we've been up to"
-            sub="Campus editions, community connects and our online Live series — all on Luma."
+            sub="Campus editions, community connects and our online Live series, all on Luma."
             cta={
               <ButtonLink href="/events" variant="ghost">
                 All events
@@ -199,6 +232,9 @@ export default async function HomePage() {
                   {e.title}
                 </h3>
                 <p className="mt-2 text-sm text-muted">{formatIST(e.startsAt)}</p>
+                {e.attendees && (
+                  <p className="mt-1 text-sm text-muted">👥 {e.attendees}{e.series === "irl" ? " students" : " attendees"}</p>
+                )}
                 <span className="mt-auto pt-4 text-sm text-gold group-hover:underline">
                   View on Luma ↗
                 </span>
@@ -220,7 +256,7 @@ export default async function HomePage() {
               <SectionHeading
                 eyebrow="Across India"
                 title="Cities we've reached"
-                sub="Campus editions and community connects — and space for yours."
+                sub="Campus editions and community connects, with space for yours."
                 cta={
                   <ButtonLink href="/map" variant="ghost">
                     Open the map
@@ -259,7 +295,7 @@ export default async function HomePage() {
           <SectionHeading
             eyebrow="On X"
             title={`Latest from @${media.xHandle}`}
-            sub="Announcements, recap videos and moments from the ground — live from our feed."
+            sub="Announcements, recap videos and moments from the ground, live from our feed."
             cta={
               <ButtonLink href={media.xUrl} variant="ghost" external>
                 Follow @{media.xHandle}
@@ -281,8 +317,11 @@ export default async function HomePage() {
                   Relive every meetup
                 </h2>
                 <p className="mt-2 max-w-lg text-muted">
-                  Recap videos from Surat, Ahmedabad, Bhopal, Vadodara, Udaipur
-                  and Indore — straight from our X.
+                  Recap videos from{" "}
+                  {cityNames.length > 1
+                    ? `${cityNames.slice(0, -1).join(", ")} and ${cityNames[cityNames.length - 1]}`
+                    : cityNames[0] ?? "every city"}
+                  , straight from our X.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <ButtonLink href="/events">Watch recaps</ButtonLink>
@@ -310,7 +349,7 @@ export default async function HomePage() {
             <SectionHeading
               eyebrow="On YouTube"
               title="Watch & learn"
-              sub="Talks, explainers and our Live series — fresh from the Zcash India channel."
+              sub="Talks, explainers and our Live series, fresh from the Zcash India channel."
               cta={
                 <ButtonLink href={site.links.youtube} variant="ghost" external>
                   Subscribe on YouTube
@@ -348,7 +387,7 @@ export default async function HomePage() {
               },
               {
                 t: "Why privacy in India",
-                d: "Remittances, freelancers, students, merchants — privacy is normal.",
+                d: "Remittances, freelancers, students, merchants. Privacy is normal.",
                 href: "/learn/privacy-in-india",
               },
             ].map((c) => (

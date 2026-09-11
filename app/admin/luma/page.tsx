@@ -177,7 +177,7 @@ export default async function AdminLuma({
             </div>
             <p className="mt-1 text-xs text-muted/50">
               Known cities (Surat, Ahmedabad, Bhopal, Vadodara, Udaipur, Indore)
-              resolve automatically — leave blank.
+              resolve automatically. Leave blank.
             </p>
           </details>
 
@@ -188,7 +188,7 @@ export default async function AdminLuma({
         <div className="mt-6 space-y-3">
           {events.length === 0 && (
             <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-muted">
-              No events in the DB yet — the site is showing the built-in config
+              No events in the DB yet. The site is showing the built-in config
               list. Add one here to take over.
             </p>
           )}

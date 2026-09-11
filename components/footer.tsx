@@ -5,22 +5,27 @@ const COL_SITE = [
   { href: "/learn", label: "Learn" },
   { href: "/map", label: "Map" },
   { href: "/events", label: "Events" },
-  { href: "/updates", label: "What's New" },
-  { href: "/bounties/irl", label: "IRL Bounty" },
+  { href: "/bounties", label: "Bounties" },
+  { href: "/clubs", label: "College clubs" },
+  { href: "/updates", label: "What's new" },
   { href: "/host", label: "Host kit" },
   { href: "/contributors", label: "Contributors" },
 ];
 
 const COL_ECO = [
+  { href: "/pay", label: "Pay with ZEC" },
+  { href: "/ecosystem", label: "Ecosystem" },
   { href: site.links.zechub, label: "ZecHub", ext: true },
   { href: site.links.zecmap, label: "ZecMap", ext: true },
   { href: site.links.zcash, label: "z.cash", ext: true },
 ];
 
 const COL_COMMUNITY = [
+  { href: "/community", label: "All channels" },
   { href: site.links.telegram, label: "Telegram", ext: true },
   { href: site.links.x, label: "X", ext: true },
   { href: site.links.youtube, label: "YouTube", ext: true },
+  { href: site.links.instagram, label: "Instagram", ext: true },
 ];
 
 function FooterLink({
@@ -86,9 +91,9 @@ export function Footer() {
             {COL_COMMUNITY.map((l) => (
               <FooterLink key={l.href} {...l} />
             ))}
-            <a href={site.links.donation} className="text-sm text-muted hover:text-gold">
-              Donate (soon)
-            </a>
+            <span className="text-sm text-muted/50" title="A shielded donation address is on the way.">
+              Donate: coming soon
+            </span>
           </div>
         </div>
 

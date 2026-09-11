@@ -35,18 +35,18 @@ export default async function SubmissionDetail({
     ["City", `${m.city}${m.state ? ", " + m.state : ""}`],
     ["When", formatIST(m.startsAt)],
     ["Duration", `${m.durationMinutes} min`],
-    ["Venue", `${m.venueName ?? "—"} (${VENUE_LABELS[m.venueType] ?? m.venueType})`],
+    ["Venue", `${m.venueName ?? "n/a"} (${VENUE_LABELS[m.venueType] ?? m.venueType})`],
     ["Format", FORMAT_LABELS[m.format] ?? m.format],
     ["Online", m.isOnline ? "Yes" : "No"],
-    ["Language", m.language ?? "—"],
+    ["Language", m.language ?? "n/a"],
     ["Attendees", `${m.attendeesTotal} total · ${m.attendeesNewToZcash} new to Zcash`],
     ["New-city activation", m.newCityActivation ? "Yes 🌱" : "No"],
-    ["Node number", m.nodeNumber != null ? `#${padNode(m.nodeNumber)}` : "—"],
+    ["Node number", m.nodeNumber != null ? `#${padNode(m.nodeNumber)}` : "n/a"],
     ["Coordinates", `${m.lat}, ${m.lng}`],
     ["Branding visible", m.brandingVisible ? "Yes" : "No"],
-    ["Registration", m.registrationUrl ?? "—"],
-    ["Bounty period", m.bountyPeriod ?? "—"],
-    ["Public host name", m.hostNamePublic ?? "—"],
+    ["Registration", m.registrationUrl ?? "n/a"],
+    ["Bounty period", m.bountyPeriod ?? "n/a"],
+    ["Public host name", m.hostNamePublic ?? "n/a"],
   ];
 
   return (
@@ -96,9 +96,9 @@ export default async function SubmissionDetail({
         {/* Private contact — admin only */}
         <div className="card mt-6 border-danger/30 bg-danger/5 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-danger">
-            Private contact — never shown publicly
+            Private contact. Never shown publicly
           </h2>
-          <p className="mt-2 font-mono text-text">{m.hostContactPrivate ?? "—"}</p>
+          <p className="mt-2 font-mono text-text">{m.hostContactPrivate ?? "n/a"}</p>
         </div>
 
         {m.adminNotes && (

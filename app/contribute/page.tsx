@@ -73,7 +73,7 @@ export default function ContributePage() {
             <a href="/contributors" className="text-gold hover:underline">
               Contributor
             </a>{" "}
-            status — with perks like merch, a map feature, a certificate and
+            status, with perks like merch, a map feature, a certificate and
             co-hosting opportunities. It is <strong>not automatic</strong>.
             Participation alone doesn't guarantee it. We look at impact, not
             numbers.

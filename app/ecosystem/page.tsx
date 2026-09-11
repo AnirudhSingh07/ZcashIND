@@ -5,7 +5,7 @@ import { Container, Section, Badge } from "@/components/ui";
 export const metadata: Metadata = {
   title: "Ecosystem",
   description:
-    "The Zcash ecosystem for India — protocol, local activity, tools and governance.",
+    "The Zcash ecosystem for India: protocol, local activity, tools and governance.",
 };
 
 function EcoCard({ title, blurb, links }: (typeof ecosystem.columns)[number]) {

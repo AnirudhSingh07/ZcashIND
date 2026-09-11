@@ -113,7 +113,7 @@ export function UpdateFeed({ updates }: { updates: FeedUpdate[] }) {
                 <div className="mt-4 [&_.twitter-tweet]:!my-0">
                   <blockquote
                     className="twitter-tweet"
-                    data-theme="dark"
+                    data-theme="light"
                     data-dnt="true"
                   >
                     <a href={u.xUrl.replace("x.com", "twitter.com")}>

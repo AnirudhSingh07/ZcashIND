@@ -53,7 +53,7 @@ export default async function AdminUpdates({
         <h1 className="text-2xl font-bold">Updates &amp; What&apos;s New</h1>
         <p className="mt-2 text-muted">
           Post updates to the /updates feed. Usually you just paste an X post
-          link — add an optional title/note and tag for context.
+          link. Add an optional title/note and tag for context.
         </p>
 
         {banner && (

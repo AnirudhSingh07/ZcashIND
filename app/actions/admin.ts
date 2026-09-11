@@ -312,13 +312,16 @@ export async function deleteUpdate(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Bounty (the /bounties/irl page: prizes, judging, minimums, window)
+// Bounties (every /bounties/<slug> page + the active IRL bounty config)
 // ---------------------------------------------------------------------------
 
 function revalidateBounty() {
+  revalidatePath("/bounties");
+  revalidatePath("/bounties/[slug]", "page");
   revalidatePath("/bounties/irl");
   revalidatePath("/bounties/irl/submit");
-  revalidatePath("/admin/bounty");
+  revalidatePath("/admin/bounties");
+  revalidatePath("/sitemap.xml");
 }
 
 /** Parse "place | amount | note" lines into a prizes JSON array. */
@@ -349,52 +352,81 @@ function parseJudging(raw: string): string {
   return JSON.stringify(judging);
 }
 
-/** Create or update a bounty (keyed by period). If `active`, deactivates others. */
+const BOUNTY_KINDS = ["irl_meetup", "mini_meetup", "content", "meme", "video", "explainer"];
+
+function bountyFields(formData: FormData) {
+  const str = (k: string) => String(formData.get(k) ?? "").trim();
+  const num = (k: string) => Number(formData.get(k)) || 0;
+  const slug = str("slug").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
+  const title = str("title");
+  const startDate = str("startDate");
+  const endDate = str("endDate");
+  const kind = BOUNTY_KINDS.includes(str("kind")) ? str("kind") : "content";
+  return {
+    valid: Boolean(slug && title && startDate),
+    slug,
+    data: {
+      title,
+      kind,
+      status: str("status") === "completed" ? "completed" : "active",
+      description: str("description") || null,
+      format: str("format") || null,
+      rules: str("rules") || null,
+      topics: str("topics") || null,
+      acceptedFormats: str("acceptedFormats") || null,
+      startDate: startDate ? new Date(`${startDate}T00:00:00+05:30`) : undefined,
+      endDate: endDate ? new Date(`${endDate}T23:59:00+05:30`) : null,
+      announcementUrl: str("announcementUrl") || null,
+      winnerAnnouncementUrl: str("winnerAnnouncementUrl") || null,
+      submissionCount: num("submissionCount"),
+      winnerCount: num("winnerCount"),
+      prizePoolUsd: num("prizePoolUsd"),
+      prizes: parsePrizes(str("prizes")),
+      period: str("period") || null,
+      windowLabel: str("windowLabel") || null,
+      minAttendees: num("minAttendees"),
+      minNewToZcash: num("minNewToZcash"),
+      minMinutes: num("minMinutes"),
+      minPhotos: num("minPhotos"),
+      judging: parseJudging(str("judging")),
+      active: formData.get("active") === "on",
+    },
+  };
+}
+
+/** Create or update a bounty (keyed by slug). If `active`, deactivates other IRL bounties. */
 export async function saveBounty(formData: FormData) {
   await assertAdmin();
-  const period = String(formData.get("period") ?? "").trim();
-  const windowLabel = String(formData.get("windowLabel") ?? "").trim();
-  if (!period || !windowLabel) redirect("/admin/bounty?error=invalid");
-
-  const data = {
-    windowLabel,
-    prizePoolUsd: Number(formData.get("prizePoolUsd")) || 0,
-    prizes: parsePrizes(String(formData.get("prizes") ?? "")),
-    minAttendees: Number(formData.get("minAttendees")) || 0,
-    minNewToZcash: Number(formData.get("minNewToZcash")) || 0,
-    minMinutes: Number(formData.get("minMinutes")) || 0,
-    minPhotos: Number(formData.get("minPhotos")) || 0,
-    judging: parseJudging(String(formData.get("judging") ?? "")),
-    active: formData.get("active") === "on",
-  };
+  const f = bountyFields(formData);
+  if (!f.valid) redirect("/admin/bounties?error=invalid");
 
   const saved = await prisma.bounty.upsert({
-    where: { period },
-    create: { period, ...data },
-    update: data,
+    where: { slug: f.slug },
+    create: { slug: f.slug, ...f.data, startDate: f.data.startDate! },
+    update: f.data,
   });
 
-  // Only one active at a time.
-  if (data.active) {
+  // Only one active IRL bounty drives the submit form.
+  if (f.data.active && f.data.kind === "irl_meetup") {
     await prisma.bounty.updateMany({
-      where: { id: { not: saved.id } },
+      where: { id: { not: saved.id }, kind: "irl_meetup" },
       data: { active: false },
     });
   }
   revalidateBounty();
-  redirect("/admin/bounty?saved=1");
+  redirect(`/admin/bounties?saved=1#${saved.slug}`);
 }
 
-/** Make a bounty the active one (deactivates the rest). */
+/** Make an IRL bounty the active one (deactivates the rest). */
 export async function activateBounty(formData: FormData) {
   await assertAdmin();
   const id = String(formData.get("id"));
   await prisma.$transaction([
-    prisma.bounty.updateMany({ data: { active: false } }),
+    prisma.bounty.updateMany({ where: { kind: "irl_meetup" }, data: { active: false } }),
     prisma.bounty.update({ where: { id }, data: { active: true } }),
   ]);
   revalidateBounty();
-  redirect("/admin/bounty");
+  redirect("/admin/bounties");
 }
 
 export async function deleteBounty(formData: FormData) {
@@ -402,7 +434,96 @@ export async function deleteBounty(formData: FormData) {
   const id = String(formData.get("id"));
   await prisma.bounty.delete({ where: { id } }).catch(() => {});
   revalidateBounty();
-  redirect("/admin/bounty");
+  redirect("/admin/bounties");
+}
+
+const X_STATUS = /^https?:\/\/(x|twitter)\.com\/[^/]+\/status\/\d+/i;
+
+/** Add a winner to a bounty. */
+export async function addBountyWinner(formData: FormData) {
+  await assertAdmin();
+  const bountyId = String(formData.get("bountyId"));
+  const xHandle = String(formData.get("xHandle") ?? "").trim().replace(/^@/, "");
+  const place = String(formData.get("place") ?? "").trim();
+  const prizeUsd = Number(formData.get("prizeUsd")) || 0;
+  const submissionUrl = String(formData.get("submissionUrl") ?? "").trim();
+  const bounty = await prisma.bounty.findUnique({ where: { id: bountyId } });
+  if (!bounty || !xHandle || !place) redirect("/admin/bounties?error=invalid");
+  if (submissionUrl && !X_STATUS.test(submissionUrl)) redirect("/admin/bounties?error=invalid");
+
+  const last = await prisma.bountyWinner.aggregate({ where: { bountyId }, _max: { sortOrder: true } });
+  await prisma.bountyWinner.create({
+    data: {
+      bountyId,
+      xHandle,
+      place,
+      prizeUsd,
+      submissionUrl: submissionUrl || null,
+      sortOrder: (last._max.sortOrder ?? 0) + 1,
+    },
+  });
+  await prisma.bounty.update({
+    where: { id: bountyId },
+    data: { winnerCount: await prisma.bountyWinner.count({ where: { bountyId } }) },
+  });
+  revalidateBounty();
+  redirect(`/admin/bounties?saved=1#${bounty.slug}`);
+}
+
+export async function deleteBountyWinner(formData: FormData) {
+  await assertAdmin();
+  const id = String(formData.get("id"));
+  const w = await prisma.bountyWinner.findUnique({ where: { id }, include: { bounty: true } });
+  if (!w) redirect("/admin/bounties");
+  await prisma.bountyWinner.delete({ where: { id } });
+  await prisma.bounty.update({
+    where: { id: w.bountyId },
+    data: { winnerCount: await prisma.bountyWinner.count({ where: { bountyId: w.bountyId } }) },
+  });
+  revalidateBounty();
+  redirect(`/admin/bounties#${w.bounty.slug}`);
+}
+
+/** Add one or many submissions (one X post URL per line). */
+export async function addBountySubmissions(formData: FormData) {
+  await assertAdmin();
+  const bountyId = String(formData.get("bountyId"));
+  const bounty = await prisma.bounty.findUnique({ where: { id: bountyId } });
+  if (!bounty) redirect("/admin/bounties?error=invalid");
+
+  const urls = String(formData.get("urls") ?? "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => X_STATUS.test(l));
+  if (urls.length === 0) redirect("/admin/bounties?error=invalid");
+
+  const last = await prisma.bountySubmission.aggregate({ where: { bountyId }, _max: { sortOrder: true } });
+  let order = (last._max.sortOrder ?? 0) + 1;
+  for (const url of urls) {
+    const m = url.match(/\.com\/([^/]+)\/status/);
+    const xHandle = m && m[1] !== "i" ? m[1] : null;
+    await prisma.bountySubmission.create({ data: { bountyId, url, xHandle, sortOrder: order++ } });
+  }
+  await prisma.bounty.update({
+    where: { id: bountyId },
+    data: { submissionCount: await prisma.bountySubmission.count({ where: { bountyId } }) },
+  });
+  revalidateBounty();
+  redirect(`/admin/bounties?saved=1#${bounty.slug}`);
+}
+
+export async function deleteBountySubmission(formData: FormData) {
+  await assertAdmin();
+  const id = String(formData.get("id"));
+  const s = await prisma.bountySubmission.findUnique({ where: { id }, include: { bounty: true } });
+  if (!s) redirect("/admin/bounties");
+  await prisma.bountySubmission.delete({ where: { id } });
+  await prisma.bounty.update({
+    where: { id: s.bountyId },
+    data: { submissionCount: await prisma.bountySubmission.count({ where: { bountyId: s.bountyId } }) },
+  });
+  revalidateBounty();
+  redirect(`/admin/bounties#${s.bounty.slug}`);
 }
 
 // ---------------------------------------------------------------------------

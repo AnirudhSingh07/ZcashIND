@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui";
 
 /**
  * The signature IRL card:
- *   🟡 Indore — Zcash IRL Node #01
+ *   🟡 Indore , Zcash IRL Node #01
  *   👥 8 attendees
  *   🌱 5 new to Zcash
  *   🟢 Hosted by [Name]
@@ -29,11 +29,11 @@ export function MeetupCard({ m }: { m: PublicMeetup }) {
           <span className="mr-1">{pin}</span>
           {m.city}
           {official ? (
-            <span className="text-muted"> — {m.title}</span>
+            <span className="text-muted">: {m.title}</span>
           ) : (
             <span className="text-muted">
               {" "}
-              — Zcash IRL Node #{padNode(m.nodeNumber)}
+              , Zcash IRL Node #{padNode(m.nodeNumber)}
             </span>
           )}
         </div>

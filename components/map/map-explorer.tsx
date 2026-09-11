@@ -78,7 +78,7 @@ export function MapExplorer({ meetups }: { meetups: PublicMeetup[] }) {
                 <div className="text-3xl">📍</div>
                 <h3 className="mt-3 font-semibold">The map is a clean slate</h3>
                 <p className="mt-2 text-sm text-muted">
-                  Verified community meetups appear here. Be the first — host one
+                  Verified community meetups appear here. Be the first: host one
                   and put your city on the map.
                 </p>
                 <Link
@@ -124,7 +124,7 @@ function SidebarCard({ m }: { m: PublicMeetup }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 font-medium leading-snug">
           <span className="mr-1">{official ? "🎪" : "🟡"}</span>
-          {official ? m.title : `${m.city} — Node #${padNode(m.nodeNumber)}`}
+          {official ? m.title : `${m.city}, Node #${padNode(m.nodeNumber)}`}
         </div>
         <span className="shrink-0 rounded-full border border-line px-2 py-0.5 text-[11px] text-muted">
           {official ? "Official" : "Community"}

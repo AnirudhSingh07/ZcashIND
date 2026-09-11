@@ -102,7 +102,7 @@ function VideoBody({ v }: { v: EventVideo }) {
 
   if (isXStatus(url)) {
     return (
-      <blockquote className="twitter-tweet" data-theme="dark" data-dnt="true">
+      <blockquote className="twitter-tweet" data-theme="light" data-dnt="true">
         <a href={url.replace("x.com", "twitter.com")}>{v.title}</a>
       </blockquote>
     );

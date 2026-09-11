@@ -3,7 +3,7 @@ import { Container, Section, ButtonLink } from "@/components/ui";
 import { site } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "Thanks — submission received",
+  title: "Thanks, submission received",
   description: "Your meetup was submitted for review.",
 };
 
@@ -34,7 +34,7 @@ export default function ThanksPage() {
               </li>
               <li>
                 <strong className="text-text">3. Leaderboard.</strong> Verified
-                September meetups show on the public bounty leaderboard.
+                meetups from the bounty window show on the public leaderboard.
               </li>
             </ol>
           </div>

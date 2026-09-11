@@ -23,6 +23,14 @@ export type LumaEvent = {
   /** Map coordinates for in-person editions. */
   lat?: number;
   lng?: number;
+  /** Headcount, when known. */
+  attendees?: number;
+  /** One-line note, e.g. "150+ new Zodl wallets". */
+  note?: string;
+  /** Comma-separated topics (dev workshops). */
+  topics?: string;
+  /** Recap or thread on X. */
+  xUrl?: string;
 };
 
 // Newest first.

@@ -31,7 +31,7 @@ const BANNERS: Record<string, { tone: "ok" | "err"; text: string }> = {
 /** Short label describing where an aftermovie's video comes from. */
 function sourceLabel(url: string | null, embed: string | null): string {
   if (embed) return "Embed snippet";
-  if (!url) return "—";
+  if (!url) return "none";
   if (url.startsWith("/uploads/")) return "Uploaded file";
   if (/(?:twitter\.com|x\.com)\/[^/]+\/status\/\d+/.test(url)) return "X post";
   if (/youtu\.be|youtube\.com/.test(url)) return "YouTube";
@@ -131,7 +131,7 @@ export default async function AdminAftermovies({
 
           <div className="mt-4 rounded-lg border border-dashed border-line p-4">
             <p className="text-xs font-medium text-muted">
-              Video source — provide ONE of the following:
+              Video source. Provide ONE of the following:
             </p>
 
             <div className="mt-3">

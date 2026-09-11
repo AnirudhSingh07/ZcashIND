@@ -5,7 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { saveUploads } from "@/lib/uploads";
 import { submitSchema } from "@/lib/validation";
 import { slugify } from "@/lib/utils";
-import { site } from "@/config/site";
+import { getBounty } from "@/lib/data";
+
+// TODO: Add rate limiting and/or CAPTCHA before production launch.
+// Currently no protection against spam submissions.
 
 export type SubmitState = {
   ok: boolean;
@@ -23,9 +26,12 @@ export async function submitMeetup(
   _prev: SubmitState,
   formData: FormData,
 ): Promise<SubmitState> {
-  // 1) Save photos first
-  const files = formData.getAll("photos").filter((f): f is File => f instanceof File);
-  const photoPaths = await saveUploads(files);
+  // 1) Collect the photo files but do NOT write them yet. Validation runs on
+  //    placeholder paths first so a failed submission leaves no orphan files.
+  const files = formData
+    .getAll("photos")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+  const photoPlaceholders = files.map((_, i) => `pending-${i}`);
 
   // 2) Collect fields
   const raw: Record<string, unknown> = {
@@ -48,7 +54,7 @@ export async function submitMeetup(
     summary: formData.get("summary"),
     attendeesTotal: formData.get("attendeesTotal"),
     attendeesNewToZcash: formData.get("attendeesNewToZcash"),
-    photos: photoPaths,
+    photos: photoPlaceholders,
     brandingVisible: formData.get("brandingVisible") === "on",
     registrationUrl: formData.get("registrationUrl") ?? "",
     language: formData.get("language") ?? "",
@@ -80,6 +86,22 @@ export async function submitMeetup(
   }
 
   const d = parsed.data;
+
+  // 3) Validation passed: now persist the photos to disk.
+  const photoPaths = await saveUploads(files);
+  if (photoPaths.length < photoPlaceholders.length) {
+    return {
+      ok: false,
+      errors: {
+        photos:
+          "One or more photos could not be saved. Use JPG, PNG or WebP under 8 MB each.",
+      },
+      message: "Please fix the highlighted fields.",
+      values,
+    };
+  }
+
+  const bounty = await getBounty();
   const startsAt = istDate(d.date, d.startTime);
   const endsAt = new Date(startsAt.getTime() + d.durationMinutes * 60_000);
 
@@ -113,11 +135,11 @@ export async function submitMeetup(
       attendeesNewToZcash: d.attendeesNewToZcash,
       newCityActivation: d.newCity,
       registrationUrl: d.registrationUrl || null,
-      photos: JSON.stringify(d.photos),
+      photos: JSON.stringify(photoPaths),
       brandingVisible: d.brandingVisible,
       hostNamePublic: d.hostNamePublic,
       hostContactPrivate: d.hostContactPrivate,
-      bountyPeriod: site.bounty.period,
+      bountyPeriod: bounty.period,
     },
   });
 

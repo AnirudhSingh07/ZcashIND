@@ -7,7 +7,7 @@ import { site } from "@/config/site";
 export const metadata: Metadata = {
   title: "The IRL Map",
   description:
-    "Every verified Zcash India meetup on one map. Filter by city, kind and venue — or add your own.",
+    "Every verified Zcash India meetup on one map. Filter by city, kind and venue, or add your own.",
 };
 
 export default async function MapPage() {
@@ -25,7 +25,7 @@ export default async function MapPage() {
               Zcash India across the country
             </h1>
             <p className="mt-2 max-w-xl text-muted">
-              Every city where Zcash India has shown up — campus editions,
+              Every city where Zcash India has shown up: campus editions,
               community connects and meetups. {site.voice.putCityOnMap}
             </p>
           </div>

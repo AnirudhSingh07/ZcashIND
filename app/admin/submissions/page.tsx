@@ -88,7 +88,7 @@ function Row({ r }: { r: Awaited<ReturnType<typeof prisma.meetup.findMany>>[numb
           {r.newCityActivation && <Badge tone="success">🌱</Badge>}
         </div>
         <div className="mt-1 truncate font-medium">
-          {r.city} — {r.title}
+          {r.city}: {r.title}
         </div>
         <div className="text-sm text-muted">
           👥 {r.attendeesTotal} · 🌱 {r.attendeesNewToZcash} new ·{" "}

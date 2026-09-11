@@ -2,44 +2,67 @@
 
 The India front door for Zcash. **Learn financial privacy, find the next meetup, put your city on the map.**
 
-A grassroots community site — not an exchange, not the Zcash Foundation, not financial advice. It teaches newcomers what shielded money is, shows official events and community IRL meetups, and lets anyone submit a mini-meetup for review to appear on the **Zcash India IRL Map**.
+A grassroots community site: not an exchange, not the Zcash Foundation, not financial advice. It teaches newcomers what shielded money is, shows official events and community IRL meetups, runs the bounty archive, and lets anyone submit a mini-meetup for review to appear on the **Zcash India IRL Map**.
+
+> **TODO: BEFORE PRODUCTION LAUNCH.** Migrate uploads to Cloudflare R2, S3, or similar persistent storage.
+> `/public/uploads` is ephemeral on Vercel and will be wiped on redeploy. Also add rate limiting / CAPTCHA
+> to the public submit form (`app/actions/submit.ts`).
 
 ## Stack
 
-- **Next.js 15** (App Router) + **TypeScript** — Server Components by default; Client Components only for the map and forms
-- **Tailwind CSS v4** with CSS-variable design tokens (dark Zcash night mode)
+- **Next.js 15** (App Router) + **TypeScript**: Server Components by default; Client Components only for the map, forms and embeds
+- **Tailwind CSS v4** with CSS-variable design tokens ("Ivory & Ink": a light, bold editorial theme)
 - **Prisma + SQLite** for data
 - **Zod** + **Server Actions** for the submit form and admin actions
-- **MapLibre GL JS** with a free dark basemap (OpenFreeMap; CARTO-style compatible)
-- Markdown content in `/content` for Learn and News
-- Uploads stored in `/public/uploads` (MVP)
-- Admin protected by `ADMIN_PASSWORD` via a signed, HTTP-only cookie — no NextAuth, no wallet connect
+- **MapLibre GL JS** rendering India from our own official boundary GeoJSON (no external tiles)
+- Markdown content in `/content/learn`
+- Uploads stored in `/public/uploads` (MVP, see the TODO above)
+- Admin protected by `ADMIN_PASSWORD` via a signed, HTTP-only cookie: no NextAuth, no wallet connect
 
 ## Quick start
 
 ```bash
 cp .env.example .env      # then edit ADMIN_PASSWORD / secrets
-pnpm install              # or: npm install
+pnpm install
 pnpm db:push              # create the SQLite schema
-pnpm db:seed              # seed events, meetups, contributors
+pnpm db:seed              # seed real events, bounties, contributors, updates
 pnpm dev                  # http://localhost:3000
 ```
 
-> Uses `pnpm` if available, else `npm` (swap `pnpm` → `npm run`). Node 18+.
-
-### One-liner (as in the spec)
+One-liner:
 
 ```bash
 cp .env.example .env && pnpm install && pnpm db:push && pnpm db:seed && pnpm dev
 ```
 
+Node 18+. Swap `pnpm` for `npm run` if you prefer npm.
+
+## What's in the database after seeding
+
+`prisma/seed.ts` holds the real Zcash India programme data (sourced from Luma, @ZcashIND on X and the
+[forum report](https://forum.zcashcommunity.com/t/zcash-india-2026/54762)):
+
+- 14 Luma events (6 campus editions, 5 Live sessions, 3 developer workshops) with attendee counts
+- 7 bounties with winners and submission links (meme, video, mini meetups x2, regional content, IRL, explainer)
+- 8 official contributors
+- 16 updates for the What's New feed
+- 6 aftermovies and 6 featured posts
+
+Community-submitted meetups (the `Meetup` table) are never seeded: they arrive through the submit form.
+Reseeding wipes and recreates everything else.
+
+Numbers that can't be derived from the DB (X followers, Telegram members, wallets created) live in
+`config/stats.ts`. Merchants live in `config/merchants.ts`, the team in `config/team.ts`, the college
+club roadmap in `config/clubs.ts`.
+
 ## Admin
 
-- Visit **`/admin/login`** and enter `ADMIN_PASSWORD` (default `zcashindia` from `.env.example` — **change it**).
-- **`/admin/submissions`** — review queue. Verify / needs-info / reject / disqualify.
-  - On **verify**, the next node number for that city is assigned, `verifiedAt` is set, and if it's the first verified meetup in the city it's flagged as a **new-city activation**.
-- **`/admin/events`** — edit official events (title, city, date/time, registration, description).
-- The private host contact is **never** exposed on public routes — admin only.
+- Visit **`/admin/login`** and enter `ADMIN_PASSWORD` (default `zcashindia` from `.env.example`. **Change it.**)
+- **`/admin/submissions`**: review queue. Verify / needs-info / reject / disqualify. On **verify**, the next node number for that city is assigned, `verifiedAt` is set, and the first verified meetup in a city is flagged as a **new-city activation**.
+- **`/admin/bounties`**: create and edit bounties, add winners and submissions, set the active IRL bounty (which drives `/bounties/irl` and the submit form).
+- **`/admin/luma`**: the events list (drives `/events`, the homepage and the map's cities).
+- **`/admin/updates`**, **`/admin/featured`**, **`/admin/aftermovies`**: the What's New feed, spotlighted X posts, and recap videos.
+- The private host contact is **never** exposed on public routes. Admin only.
 
 ## Environment
 
@@ -51,51 +74,46 @@ See `.env.example`:
 | `ADMIN_PASSWORD` | Admin login password |
 | `ADMIN_COOKIE_SECRET` | Signs the admin session cookie (use a long random string) |
 | `NEXT_PUBLIC_SITE_URL` | Absolute URL for OG/SEO |
-| `NEXT_PUBLIC_MAP_STYLE` | Map basemap style URL (defaults to OpenFreeMap dark) |
-| `NEXT_PUBLIC_GEOCODER_KEY` | Optional. If missing, the submit form degrades to click-the-map + city text |
 
 ## Project layout
 
 ```
 app/            routes (public + /admin) and Server Actions in app/actions
-components/     header, footer, map (meetup-map, map-explorer, location-picker),
-               meetup-card, bounty-prizes, judging-bars, leaderboard, ui, admin/*
-config/         site.ts (links, bounty, map, voice) and ecosystem.ts
-content/        markdown for learn/ and news/
+components/     header, footer, map/*, bounty/*, social/*, admin/*, ui primitives
+config/         site.ts (links, voice), stats.ts, merchants.ts, team.ts, clubs.ts,
+                ecosystem.ts, media.ts, luma-events.ts (config fallback for the DB)
+content/        markdown for learn/
 lib/            prisma, data (public-safe reads), auth, validation (zod),
-               content, markdown renderer, uploads, utils
+                content, markdown renderer, uploads, utils, youtube
 prisma/         schema.prisma + seed.ts
-public/         brand/ (poster), uploads/, icon.svg, og.svg
+public/         brand/ (poster), uploads/, icon.svg, og.svg, india-official.geojson
 ```
 
-All community/ecosystem links live in **`config/site.ts`** — edit there, used everywhere.
+All community/ecosystem links live in **`config/site.ts`**.
 
 ## Key routes
 
-- Public: `/`, `/learn` (+7 lessons), `/map`, `/map/[city]`, `/events`, `/events/[slug]`,
-  `/bounties/irl`, `/bounties/irl/submit` (+ `/thanks`), `/host`, `/contributors` (+ `/[slug]`),
-  `/ecosystem`, `/pay`, `/news` (+ `/[slug]`), `/about`, `/community`, `/contribute`,
-  `/disclaimer`, `/privacy`
-- Admin: `/admin/login`, `/admin`, `/admin/submissions` (+ `/[id]`), `/admin/events`
+- Public: `/`, `/learn` (+7 lessons), `/map`, `/map/[city]`, `/events`, `/bounties`, `/bounties/[slug]`,
+  `/bounties/irl` (+ `/submit`, `/submit/thanks`), `/clubs`, `/pay`, `/host`, `/contributors` (+ `/[slug]`),
+  `/ecosystem`, `/updates`, `/about`, `/community`, `/contribute`, `/disclaimer`, `/privacy`
+- Admin: `/admin/login`, `/admin`, `/admin/submissions` (+ `/[id]`), `/admin/bounties`, `/admin/luma`,
+  `/admin/events`, `/admin/featured`, `/admin/aftermovies`, `/admin/updates`
 
 ## Notes
 
-- **Public map shows verified pins only.** Pending submissions never appear until an admin verifies them.
+- **Public map shows verified community pins only.** Pending submissions never appear until an admin verifies them.
 - Dates are rendered in **IST (Asia/Kolkata)**.
-- Bounty window and prizes are config-driven in `config/site.ts` (`bounty.period = "2026-09"`).
+- The active IRL bounty (prizes, minimums, judging) is DB-driven from `/admin/bounties`, with `config/site.ts` as the fallback if the table is empty.
 
 ## Deploy (Vercel)
 
-Set the env vars above in the Vercel dashboard. Note: `/public/uploads` on Vercel is ephemeral — for production, move uploads to object storage (S3/R2). This is a Phase 2 item.
+Set the env vars above in the Vercel dashboard. Move uploads to object storage first (see the TODO at the top).
 
-## Phase 2 leftovers
+## Still to do
 
-- Hindi translations of the Learn pages (subtitles are already in place)
-- Luma event sync
-- ZecMap merchant import
+- Persistent object storage for uploads (R2/S3)
+- Rate limiting / CAPTCHA on the submit form
+- Hindi translations of the Learn pages (subtitles are in place; Google Translate covers the rest for now)
+- Luma API sync (events are entered by hand in `/admin/luma`)
 - Auto-generated contributor certificates
-- Durable object storage for uploads
-
----
-
-Not an exchange. Not financial advice.
+- Admin UI for contributors (currently `prisma/seed.ts`)

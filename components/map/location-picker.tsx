@@ -73,7 +73,7 @@ export function LocationPicker({
 
   function useMyLocation() {
     if (!navigator.geolocation) {
-      setStatus("Geolocation not available — tap the map instead.");
+      setStatus("Geolocation not available. Tap the map instead.");
       return;
     }
     setStatus("Locating…");
@@ -82,7 +82,7 @@ export function LocationPicker({
         place(pos.coords.longitude, pos.coords.latitude, true);
         setStatus("");
       },
-      () => setStatus("Couldn't get location — tap the map instead."),
+      () => setStatus("Couldn't get location. Tap the map instead."),
       { enableHighAccuracy: true, timeout: 8000 },
     );
   }

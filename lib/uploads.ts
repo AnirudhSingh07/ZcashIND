@@ -1,3 +1,6 @@
+// TODO: BEFORE PRODUCTION LAUNCH — migrate uploads to Cloudflare R2, S3, or similar persistent storage.
+// Current /public/uploads is ephemeral on Vercel and will be wiped on redeploy.
+
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
@@ -8,7 +11,6 @@ const ALLOWED = new Set([
   "image/png",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
 ]);
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB per photo
 
@@ -17,7 +19,6 @@ const EXT: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
-  "image/svg+xml": "svg",
 };
 
 const VIDEO_ALLOWED: Record<string, string> = {

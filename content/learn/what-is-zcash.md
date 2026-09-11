@@ -1,7 +1,7 @@
 ---
 title: "What is Zcash?"
 hindi: "ज़ीकैश क्या है?"
-description: "Digital cash with real privacy — shielded when you choose it."
+description: "Digital cash with real privacy, shielded when you choose it."
 order: 2
 ---
 
@@ -17,8 +17,8 @@ The unit is **ZEC**. You hold it in a wallet on your phone. You can send it to a
 
 Zcash has two kinds of addresses:
 
-- **Transparent** — works like Bitcoin. Amounts and addresses are visible on the public chain.
-- **Shielded** — uses cryptography (zero-knowledge proofs) so the network can confirm a payment is valid **without revealing** the sender, receiver, or amount.
+- **Transparent**: works like Bitcoin. Amounts and addresses are visible on the public chain.
+- **Shielded**: uses cryptography (zero-knowledge proofs) so the network can confirm a payment is valid **without revealing** the sender, receiver, or amount.
 
 Modern Zcash wallets use a **unified address** that prefers the shielded pool. In practice: you get privacy by default, and you don't have to think about the plumbing.
 
@@ -30,6 +30,6 @@ Modern Zcash wallets use a **unified address** that prefers the shielded pool. I
 
 ## Go deeper
 
-The protocol details — how zero-knowledge proofs work, the Orchard shielded pool, network upgrades — are documented thoroughly on [ZecHub](https://zechub.wiki/). We link out rather than rewrite the specs.
+The protocol details (how zero-knowledge proofs work, the Orchard shielded pool, network upgrades) are documented thoroughly on [ZecHub](https://zechub.wiki/). We link out rather than rewrite the specs.
 
 Next: [Shielded vs transparent →](/learn/shielded-vs-transparent)

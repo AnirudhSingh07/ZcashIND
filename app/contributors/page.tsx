@@ -40,7 +40,7 @@ export default async function ContributorsPage() {
           The people making it happen
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-muted">
-          Contributors are recognised for consistent, real impact — hosting
+          Contributors are recognised for consistent, real impact: hosting
           meetups, teaching newcomers, writing local content. It is{" "}
           <strong className="text-text">not automatic</strong>. Participation
           alone doesn't guarantee status. {site.voice.impact}
@@ -53,15 +53,25 @@ export default async function ContributorsPage() {
               href={`/contributors/${c.slug}`}
               className="card group flex items-start gap-4 p-6 transition-colors hover:border-gold/50"
             >
-              <Avatar name={c.name} src={c.avatar} />
+              <Avatar name={c.name.replace(/^@/, "")} src={c.avatar} />
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h2 className="font-semibold group-hover:text-gold">{c.name}</h2>
                   {c.official && <Badge tone="success">✓ Official</Badge>}
                 </div>
+                {c.role && <p className="text-sm text-gold">{c.role}</p>}
                 {c.city && <p className="text-sm text-muted">{c.city}</p>}
                 {c.bio && (
                   <p className="mt-2 line-clamp-3 text-sm text-muted/80">{c.bio}</p>
+                )}
+                {c.highlights.length > 0 && (
+                  <ul className="mt-3 flex flex-wrap gap-1.5">
+                    {c.highlights.slice(0, 2).map((h) => (
+                      <li key={h} className="rounded-full border border-gold/30 bg-gold/5 px-2 py-0.5 text-xs text-gold">
+                        🏆 {h}
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </Link>

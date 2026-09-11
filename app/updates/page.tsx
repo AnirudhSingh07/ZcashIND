@@ -7,7 +7,7 @@ import { UpdateFeed } from "@/components/social/update-feed";
 export const metadata: Metadata = {
   title: "Updates & What's New",
   description:
-    "The latest from Zcash India — announcements, milestones and moments, straight from our X.",
+    "The latest from Zcash India: announcements, milestones and moments, straight from our X.",
 };
 
 export default async function UpdatesPage() {
@@ -26,7 +26,7 @@ export default async function UpdatesPage() {
             <h1 className="text-4xl font-bold sm:text-5xl">Updates &amp; What&apos;s New</h1>
             <p className="mt-4 max-w-xl text-lg text-muted">
               Announcements, milestones and moments from the Zcash India
-              community — freshest first, straight from our X.
+              community, freshest first, straight from our X.
             </p>
             <div className="mt-6">
               <ButtonLink href={site.links.x} variant="ghost" external>

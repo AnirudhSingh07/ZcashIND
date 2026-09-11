@@ -13,7 +13,7 @@ export function AdminNav() {
           ["/admin/featured", "Featured"],
           ["/admin/aftermovies", "Aftermovies"],
           ["/admin/updates", "Updates"],
-          ["/admin/bounty", "Bounty"],
+          ["/admin/bounties", "Bounties"],
         ].map(([href, label]) => (
           <Link
             key={href}

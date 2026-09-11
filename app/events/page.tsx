@@ -11,7 +11,7 @@ import { getFeaturedPosts, getAftermovies } from "@/lib/data";
 export const metadata: Metadata = {
   title: "Events",
   description:
-    "Official Zcash India events — campus editions, community connects and the online Live & Dev series. Straight from our Luma.",
+    "Official Zcash India events: campus editions, community connects and the online Live & Dev series. Straight from our Luma.",
 };
 
 export default async function EventsPage() {
@@ -30,7 +30,7 @@ export default async function EventsPage() {
             <h1 className="text-4xl font-bold sm:text-5xl">Official events</h1>
             <p className="mt-4 max-w-xl text-lg text-muted">
               Campus editions, community connects, and the online Live &amp; Dev
-              series — all on our Luma. For community-hosted IRL meetups, see the{" "}
+              series, all on our Luma. For community-hosted IRL meetups, see the{" "}
               <Link href="/map" className="text-gold hover:underline">
                 map
               </Link>
@@ -58,8 +58,8 @@ export default async function EventsPage() {
                 Videos from our events
               </h2>
               <p className="mt-2 max-w-xl text-muted">
-                Recaps and aftermovies from Zcash India meetups, straight from our
-                X feed. {site.voice.impact}
+                Recaps and aftermovies from every Zcash India campus edition,
+                straight from our X feed. {site.voice.impact}
               </p>
             </div>
             <ButtonLink href={media.xUrl} variant="ghost" external>

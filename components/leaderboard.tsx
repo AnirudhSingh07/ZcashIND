@@ -19,7 +19,7 @@ export async function Leaderboard() {
       </div>
       {rows.length === 0 ? (
         <div className="p-8 text-center text-muted">
-          No verified meetups yet this window. Be the first —{" "}
+          No verified meetups yet this window. Be the first:{" "}
           <Link href="/bounties/irl/submit" className="text-gold hover:underline">
             add yours
           </Link>
@@ -38,7 +38,7 @@ export async function Leaderboard() {
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="truncate font-medium">
-                    {m.city} — Node #{padNode(m.nodeNumber)}
+                    {m.city}, Node #{padNode(m.nodeNumber)}
                   </span>
                   {m.newCityActivation && <Badge tone="success">🌱 New city</Badge>}
                 </div>

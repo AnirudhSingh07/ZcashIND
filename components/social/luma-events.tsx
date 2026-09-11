@@ -22,6 +22,19 @@ function EventRow({ e }: { e: LumaEvent }) {
         {e.coHosts && (
           <div className="mt-0.5 text-xs text-muted/60">with {e.coHosts}</div>
         )}
+        {e.topics && (
+          <div className="mt-1 text-xs text-muted/70">Topics: {e.topics}</div>
+        )}
+        {(e.attendees || e.note) && (
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+            {e.attendees && (
+              <span className="rounded-full bg-gold/10 px-2 py-0.5 font-medium text-gold">
+                👥 {e.attendees}{e.isOnline ? " attendees" : " students"}
+              </span>
+            )}
+            {e.note && <span className="text-muted">{e.note}</span>}
+          </div>
+        )}
       </div>
       <span className="shrink-0 text-sm text-gold">Luma ↗</span>
     </a>
@@ -33,6 +46,8 @@ export async function LumaEvents() {
   const featured = lumaEvents.slice(0, 3);
   const irl = lumaEvents.filter((e) => e.series === "irl");
   const online = lumaEvents.filter((e) => e.series !== "irl");
+  const irlAttendees = irl.reduce((s, e) => s + (e.attendees ?? 0), 0);
+  const onlineAttendees = online.reduce((s, e) => s + (e.attendees ?? 0), 0);
 
   return (
     <div>
@@ -71,6 +86,7 @@ export async function LumaEvents() {
       </div>
       <p className="mt-1 text-sm text-muted">
         Campus workshops and community connects across India.
+        {irlAttendees > 0 && ` ${irlAttendees.toLocaleString("en-IN")} students so far.`}
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {irl.map((e) => (
@@ -84,7 +100,8 @@ export async function LumaEvents() {
         <Badge tone="muted">{online.length}</Badge>
       </div>
       <p className="mt-1 text-sm text-muted">
-        Our online sessions — ecosystem updates, privacy talks and dev workshops.
+        Our online sessions: ecosystem updates, privacy talks and dev workshops.
+        {onlineAttendees > 0 && ` ${onlineAttendees.toLocaleString("en-IN")} attendees across the series.`}
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {online.map((e) => (

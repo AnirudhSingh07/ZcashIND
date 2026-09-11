@@ -219,6 +219,40 @@ a {
   border-top: 1px solid var(--line);
   margin: 2rem 0;
 }
+.prose .table-wrap {
+  overflow-x: auto;
+  margin: 1.25rem 0;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.prose th,
+.prose td {
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.prose th {
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+}
+.prose th:first-child {
+  border-top-left-radius: 10px;
+}
+.prose th:last-child {
+  border-top-right-radius: 10px;
+}
+.prose td {
+  color: var(--muted);
+}
+.prose td:first-child {
+  color: var(--text);
+  font-weight: 500;
+}
 .prose .lead {
   font-size: 1.2rem;
   color: var(--text);

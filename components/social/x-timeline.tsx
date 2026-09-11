@@ -148,7 +148,7 @@ export function XTimeline({
       >
         <a
           className="twitter-timeline"
-          data-theme="dark"
+          data-theme="light"
           data-height={height}
           data-chrome="noheader nofooter transparent noborders"
           href={`https://twitter.com/${handle}`}

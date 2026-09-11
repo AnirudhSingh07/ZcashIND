@@ -39,4 +39,4 @@ order: 7
 
 ## Going deeper
 
-For protocol-level terms — Orchard, Sapling, Halo 2, network upgrades — see the thorough glossaries on [ZecHub](https://zechub.wiki/).
+For protocol-level terms (Orchard, Sapling, Halo 2, network upgrades) see the thorough glossaries on [ZecHub](https://zechub.wiki/).

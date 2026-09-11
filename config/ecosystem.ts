@@ -13,13 +13,13 @@ export const ecosystem: {
       title: "Protocol",
       blurb: "How Zcash actually works. Read the deep docs at ZecHub.",
       links: [
-        { label: "ZecHub — learn the protocol", href: site.links.zechub },
+        { label: "ZecHub: learn the protocol", href: site.links.zechub },
         {
-          label: "Ironwood roadmap",
-          href: "https://zechub.wiki/",
-          note: "Next-gen Zcash direction",
+          label: "Ironwood upgrade",
+          href: site.links.ironwood,
+          note: "NU6.3: what's changing and when",
         },
-        { label: "z.cash — the official project", href: site.links.zcash },
+        { label: "z.cash: the official project", href: site.links.zcash },
       ],
     },
     {
@@ -27,17 +27,33 @@ export const ecosystem: {
       blurb: "Local events, bounties, cities and infrastructure.",
       links: [
         { label: "Zcash India events", href: "/events" },
-        { label: "IRL meetup bounty", href: "/bounties/irl" },
+        { label: "Bounties", href: "/bounties" },
         { label: "The IRL map", href: "/map" },
-        { label: "Mumbai light client (infra)", href: "/ecosystem" },
+        { label: "College clubs (ZICC)", href: "/clubs" },
+        {
+          label: "Mumbai light client status",
+          href: site.links.lightClientStatus,
+          note: "Independent lightwalletd node, open source",
+        },
+        {
+          label: "Light client source code",
+          href: site.links.lightClientSource,
+          note: "github.com/jatinsahijwani/openlightnodes",
+        },
       ],
     },
     {
       title: "Tools",
       blurb: "Wallets, maps and explorers you can actually use today.",
       links: [
-        { label: "Wallets (Zashi, Zingo)", href: "/learn/wallets" },
-        { label: "ZecMap — merchants & meetups", href: site.links.zecmap },
+        { label: "Wallets (Zashi, Zodl, Zingo)", href: "/learn/wallets" },
+        { label: "Pay with ZEC in India", href: "/pay" },
+        { label: "ZecMap: merchants & meetups", href: site.links.zecmap },
+        {
+          label: "Zodl Hindi localisation",
+          href: site.links.zodlHindiPr,
+          note: "Our PR to the Zodl Android wallet",
+        },
         {
           label: "Block explorer",
           href: "https://mainnet.zcashexplorer.app/",
@@ -53,24 +69,29 @@ export const ecosystem: {
           label: "Zcash Community Grants",
           href: "https://zcashcommunitygrants.org/",
         },
+        {
+          label: "Zcash India 2026 report",
+          href: site.links.forumReport,
+          note: "Our numbers, published on the community forum",
+        },
       ],
     },
   ],
   thisMonth: [
     {
-      label: "IRL meetup bounty — September 2026",
+      label: "IRL meetup bounty, September 2026",
       href: "/bounties/irl",
       note: "Host a meetup, put your city on the map",
     },
     {
-      label: "Zcash India Live (online series)",
-      href: "/events",
-      note: "Monthly online sessions",
+      label: "Explain Zcash Like I'm New",
+      href: "/bounties/explain-zcash-september-2026",
+      note: "$150 in ZEC, 16 winners",
     },
     {
-      label: "Regional content bounty",
-      href: "/contribute",
-      note: "Write local how-tos and recaps",
+      label: "Zcash India Live (online series)",
+      href: "/events",
+      note: "Monthly online sessions, win real ZEC",
     },
   ],
 };

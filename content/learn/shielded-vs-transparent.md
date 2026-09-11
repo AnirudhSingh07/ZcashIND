@@ -1,7 +1,7 @@
 ---
 title: "Shielded vs transparent"
 hindi: "शील्डेड बनाम ट्रांसपेरेंट"
-description: "Who can see a payment — and how unified addresses keep you private."
+description: "Who can see a payment, and how unified addresses keep you private."
 order: 3
 ---
 
@@ -16,7 +16,7 @@ order: 3
 | Amount | Public | Hidden |
 | Valid & un-forgeable | Yes | Yes |
 
-Both kinds are real Zcash. The difference is what the rest of the world can see. A **shielded** payment is verified by the network using a zero-knowledge proof — the math confirms it's legitimate without exposing the details.
+Both kinds are real Zcash. The difference is what the rest of the world can see. A **shielded** payment is verified by the network using a zero-knowledge proof: the math confirms it's legitimate without exposing the details.
 
 ## Unified Addresses (UA)
 

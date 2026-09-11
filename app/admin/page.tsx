@@ -23,6 +23,8 @@ export default async function AdminHome() {
     aftermovies,
     lumaCount,
     updatesCount,
+    bountyCount,
+    contributorCount,
   ] = await Promise.all([
       prisma.meetup.count({ where: { status: "pending" } }),
       prisma.meetup.count({ where: { status: "needs_info" } }),
@@ -37,6 +39,8 @@ export default async function AdminHome() {
       prisma.aftermovie.count(),
       prisma.lumaEvent.count(),
       prisma.update.count(),
+      prisma.bounty.count(),
+      prisma.contributor.count(),
     ]);
 
   return (
@@ -93,16 +97,22 @@ export default async function AdminHome() {
             <h2 className="text-lg font-semibold text-gold">Updates →</h2>
             <p className="mt-1 text-muted">
               {updatesCount} {updatesCount === 1 ? "update" : "updates"} on
-              /updates. Post from an X link — title, note, tag, pin.
+              /updates. Post from an X link with a title, note, tag and pin.
             </p>
           </Link>
-          <Link href="/admin/bounty" className="card p-6 hover:border-gold/50">
-            <h2 className="text-lg font-semibold text-gold">Bounty →</h2>
+          <Link href="/admin/bounties" className="card p-6 hover:border-gold/50">
+            <h2 className="text-lg font-semibold text-gold">Bounties →</h2>
             <p className="mt-1 text-muted">
-              Configure the IRL meetup bounty — prize pool, prizes, minimums and
-              judging weights shown on /bounties/irl.
+              {bountyCount} {bountyCount === 1 ? "bounty" : "bounties"} on /bounties. Create bounties,
+              add winners and submissions, and set the active IRL bounty.
             </p>
           </Link>
+          <div className="card p-6">
+            <h2 className="text-lg font-semibold">Contributors</h2>
+            <p className="mt-1 text-muted">
+              {contributorCount} on /contributors. Managed in prisma/seed.ts for now.
+            </p>
+          </div>
         </div>
       </Container>
     </Section>
