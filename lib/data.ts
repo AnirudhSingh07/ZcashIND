@@ -38,7 +38,6 @@ export type PublicMeetup = {
   photos: string[];
   brandingVisible: boolean;
   hostNamePublic: string | null;
-  hostContributorId: string | null;
   bountyPeriod: string | null;
   createdAt: string;
   verifiedAt: string | null;
@@ -74,7 +73,6 @@ export function toPublic(m: Meetup): PublicMeetup {
     photos: parsePhotos(m.photos),
     brandingVisible: m.brandingVisible,
     hostNamePublic: m.hostNamePublic,
-    hostContributorId: m.hostContributorId,
     bountyPeriod: m.bountyPeriod,
     createdAt: m.createdAt.toISOString(),
     verifiedAt: m.verifiedAt ? m.verifiedAt.toISOString() : null,
@@ -162,7 +160,6 @@ export async function lumaPins(): Promise<PublicMeetup[]> {
     photos: [],
     brandingVisible: true,
     hostNamePublic: "Zcash India",
-    hostContributorId: null,
     bountyPeriod: null,
     createdAt: e.startsAt,
     verifiedAt: e.startsAt,
@@ -276,64 +273,6 @@ export async function getLeaderboard(period: string) {
     orderBy: [{ attendeesTotal: "desc" }, { attendeesNewToZcash: "desc" }],
   });
   return rows.map(toPublic);
-}
-
-export type PublicContributor = {
-  id: string;
-  slug: string;
-  name: string;
-  bio: string | null;
-  city: string | null;
-  telegram: string | null;
-  x: string | null;
-  xHandle: string | null;
-  avatar: string | null;
-  official: boolean;
-  role: string | null;
-  meetupsHosted: number;
-  peopleReached: number;
-  newToZcash: number;
-  highlights: string[];
-};
-
-function toPublicContributor(
-  c: NonNullable<Awaited<ReturnType<typeof prisma.contributor.findFirst>>>,
-): PublicContributor {
-  return {
-    id: c.id,
-    slug: c.slug,
-    name: c.name,
-    bio: c.bio,
-    city: c.city,
-    telegram: c.telegram,
-    x: c.x,
-    xHandle: c.xHandle,
-    avatar: c.avatar,
-    official: c.official,
-    role: c.role,
-    meetupsHosted: c.meetupsHosted,
-    peopleReached: c.peopleReached,
-    newToZcash: c.newToZcash,
-    highlights: safeJson<string[]>(c.highlights, []),
-  };
-}
-
-export async function getContributors(): Promise<PublicContributor[]> {
-  const rows = await prisma.contributor.findMany({
-    where: { official: true },
-    orderBy: { createdAt: "asc" },
-  });
-  return rows.map(toPublicContributor);
-}
-
-export async function getContributor(slug: string) {
-  const c = await prisma.contributor.findUnique({ where: { slug } });
-  if (!c) return null;
-  const meetups = await prisma.meetup.findMany({
-    where: { hostContributorId: c.id, status: "verified" },
-    orderBy: { startsAt: "desc" },
-  });
-  return { contributor: toPublicContributor(c), meetups: meetups.map(toPublic) };
 }
 
 /** Next official upcoming event. */

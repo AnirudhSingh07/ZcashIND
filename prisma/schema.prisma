@@ -63,9 +63,6 @@ model Meetup {
   // Private contact — NEVER exposed on public routes. Admin only.
   hostContactPrivate String?
 
-  hostContributor   Contributor? @relation(fields: [hostContributorId], references: [id])
-  hostContributorId String?
-
   bountyPeriod String? // e.g. "2026-09"
 
   adminNotes      String?
@@ -77,32 +74,6 @@ model Meetup {
   @@index([status])
   @@index([kind])
   @@index([city])
-}
-
-/// A recognised Zcash India contributor.
-model Contributor {
-  id     String @id @default(cuid())
-  slug   String @unique
-  name   String
-  bio    String?
-  city   String?
-  telegram String?
-  x        String?
-  avatar   String?
-  official Boolean @default(false)
-  xHandle  String? // without the @
-  role     String? // e.g. "Community host", "Media Lead"
-
-  // Manual stats (used when the contributor's meetups aren't in the DB yet).
-  meetupsHosted Int @default(0)
-  peopleReached Int @default(0)
-  newToZcash    Int @default(0)
-  // JSON string array of bounty wins / notable contributions.
-  highlights String @default("[]")
-
-  meetups Meetup[]
-
-  createdAt DateTime @default(now())
 }
 
 /// Hand-picked @ZcashIND posts spotlighted on the site (admin-managed).

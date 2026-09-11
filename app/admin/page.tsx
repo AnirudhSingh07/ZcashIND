@@ -24,7 +24,6 @@ export default async function AdminHome() {
     lumaCount,
     updatesCount,
     bountyCount,
-    contributorCount,
   ] = await Promise.all([
       prisma.meetup.count({ where: { status: "pending" } }),
       prisma.meetup.count({ where: { status: "needs_info" } }),
@@ -40,7 +39,6 @@ export default async function AdminHome() {
       prisma.lumaEvent.count(),
       prisma.update.count(),
       prisma.bounty.count(),
-      prisma.contributor.count(),
     ]);
 
   return (
@@ -107,12 +105,7 @@ export default async function AdminHome() {
               add winners and submissions, and set the active IRL bounty.
             </p>
           </Link>
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold">Contributors</h2>
-            <p className="mt-1 text-muted">
-              {contributorCount} on /contributors. Managed in prisma/seed.ts for now.
-            </p>
-          </div>
+
         </div>
       </Container>
     </Section>

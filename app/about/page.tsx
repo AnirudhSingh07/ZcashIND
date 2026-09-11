@@ -90,7 +90,7 @@ export default async function AboutPage() {
           <h2 className="text-2xl font-bold">The team</h2>
           <p className="mt-1 max-w-2xl text-muted">
             Five people run the day-to-day. Everyone else you see hosting, filming and writing is a
-            community contributor.
+            community volunteer.
           </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {team.map((m) => (
@@ -118,9 +118,6 @@ export default async function AboutPage() {
 
         <div className="mt-12 flex flex-wrap gap-3">
           <ButtonLink href="/contribute">Get involved</ButtonLink>
-          <ButtonLink href="/contributors" variant="ghost">
-            Meet the contributors
-          </ButtonLink>
           <ButtonLink href={site.links.telegram} variant="ghost" external>
             Join Telegram
           </ButtonLink>

@@ -25,7 +25,7 @@ A grassroots community site: not an exchange, not the Zcash Foundation, not fina
 cp .env.example .env      # then edit ADMIN_PASSWORD / secrets
 pnpm install
 pnpm db:push              # create the SQLite schema
-pnpm db:seed              # seed real events, bounties, contributors, updates
+pnpm db:seed              # seed real events, bounties, updates
 pnpm dev                  # http://localhost:3000
 ```
 
@@ -44,7 +44,6 @@ Node 18+. Swap `pnpm` for `npm run` if you prefer npm.
 
 - 14 Luma events (6 campus editions, 5 Live sessions, 3 developer workshops) with attendee counts
 - 7 bounties with winners and submission links (meme, video, mini meetups x2, regional content, IRL, explainer)
-- 8 official contributors
 - 16 updates for the What's New feed
 - 6 aftermovies and 6 featured posts
 
@@ -94,7 +93,7 @@ All community/ecosystem links live in **`config/site.ts`**.
 ## Key routes
 
 - Public: `/`, `/learn` (+7 lessons), `/map`, `/map/[city]`, `/events`, `/bounties`, `/bounties/[slug]`,
-  `/bounties/irl` (+ `/submit`, `/submit/thanks`), `/clubs`, `/pay`, `/host`, `/contributors` (+ `/[slug]`),
+  `/bounties/irl` (+ `/submit`, `/submit/thanks`), `/clubs`, `/pay`, `/host`,
   `/ecosystem`, `/updates`, `/about`, `/community`, `/contribute`, `/disclaimer`, `/privacy`
 - Admin: `/admin/login`, `/admin`, `/admin/submissions` (+ `/[id]`), `/admin/bounties`, `/admin/luma`,
   `/admin/events`, `/admin/featured`, `/admin/aftermovies`, `/admin/updates`
@@ -116,4 +115,3 @@ Set the env vars above in the Vercel dashboard. Move uploads to object storage f
 - Hindi translations of the Learn pages (subtitles are in place; Google Translate covers the rest for now)
 - Luma API sync (events are entered by hand in `/admin/luma`)
 - Auto-generated contributor certificates
-- Admin UI for contributors (currently `prisma/seed.ts`)

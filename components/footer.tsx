@@ -9,7 +9,6 @@ const COL_SITE = [
   { href: "/clubs", label: "College clubs" },
   { href: "/updates", label: "What's new" },
   { href: "/host", label: "Host kit" },
-  { href: "/contributors", label: "Contributors" },
 ];
 
 const COL_ECO = [

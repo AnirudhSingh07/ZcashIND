@@ -818,92 +818,6 @@ const bounties = [
 ];
 
 // ---------------------------------------------------------------------------
-// Contributors
-// ---------------------------------------------------------------------------
-
-const contributors = [
-  {
-    slug: "0xalfiya",
-    name: "@0xAlfiya",
-    xHandle: "0xAlfiya",
-    role: "Community host & creator",
-    bio: "The most consistent contributor in Zcash India. Won 1st place in both Mini Meetup Bounties and 2nd place in the Regional Language Content Bounty.",
-    meetupsHosted: 2,
-    highlights: J(["1st place, Mini Meetup Bounty #1", "1st place, Mini Meetup Bounty #2", "2nd place, Regional Language Content Bounty"]),
-  },
-  {
-    slug: "ucofweb3",
-    name: "@ucofweb3",
-    xHandle: "ucofweb3",
-    role: "Content creator",
-    bio: "Placed in four bounties in a row: the thread bounty, the meme bounty, top winner in the Video Explainer Bounty, and 3rd in the Regional Language Content Bounty.",
-    highlights: J(["Top winner, Video Explainer Bounty", "3rd place, Regional Language Content Bounty", "Main winner, Meme Bounty", "Outstanding, Thread Writing Bounty"]),
-  },
-  {
-    slug: "validcrypt",
-    name: "@validcrypt",
-    xHandle: "validcrypt",
-    role: "Content creator",
-    bio: "Won 1st place in the Regional Language Content Bounty with an explainer in a regional language that set the bar for the whole round.",
-    highlights: J(["1st place, Regional Language Content Bounty ($50)"]),
-  },
-  {
-    slug: "lakhan-997",
-    name: "@Lakhan_997",
-    xHandle: "Lakhan_997",
-    role: "Meetup host",
-    bio: "Active meetup host. Won 2nd place in Mini Meetup Bounty #2 and submitted to the Regional Language Content Bounty.",
-    meetupsHosted: 1,
-    highlights: J(["2nd place, Mini Meetup Bounty #2", "Regional Language Content Bounty entrant"]),
-  },
-  {
-    slug: "cryptokidxx",
-    name: "@cryptokidxx",
-    xHandle: "cryptokidxx",
-    role: "Meetup host & creator",
-    bio: "Won 2nd place in Mini Meetup Bounty #2 and an honorable mention in the Regional Language Content Bounty. Shows up for every bounty.",
-    meetupsHosted: 1,
-    highlights: J(["2nd place, Mini Meetup Bounty #2", "Honorable mention, Regional Language Content Bounty"]),
-  },
-  {
-    slug: "vaibhav-raj-singh-panwar",
-    name: "Vaibhav Raj Singh Panwar",
-    xHandle: "VaibhavRaj9538",
-    role: "Distribution & Partnerships Lead",
-    bio: "Started as a community host and creator: runner-up in the Video Explainer Bounty, special mention in Mini Meetup #1, honorable mention in the Regional Language Content Bounty, host in Mini Meetup #2. Now on the core team leading partnerships, regional content and distribution.",
-    meetupsHosted: 2,
-    highlights: J(["Core team: Distribution & Partnerships Lead", "Runner-up, Video Explainer Bounty", "Special mention, Mini Meetup Bounty #1", "Honorable mention, Regional Language Content Bounty"]),
-  },
-  {
-    slug: "krrishrath29455",
-    name: "@KrrishRath29455",
-    xHandle: "KrrishRath29455",
-    role: "Meetup host & creator",
-    bio: "Hosted in both Mini Meetup Bounties and took an honorable mention in the Regional Language Content Bounty with a Gujarati explainer.",
-    meetupsHosted: 2,
-    highlights: J(["Honourable mention, Mini Meetup Bounty #1", "Honorable mention, Regional Language Content Bounty", "Host, Mini Meetup Bounty #2"]),
-  },
-  {
-    slug: "adarshkumar1217",
-    name: "@AdarshKumar1217",
-    xHandle: "AdarshKumar1217",
-    role: "Meetup host & creator",
-    bio: "Hosted in both Mini Meetup Bounties (special mention in #1) and took an honorable mention in the Regional Language Content Bounty with a Bhojpuri explainer.",
-    meetupsHosted: 2,
-    highlights: J(["Special mention, Mini Meetup Bounty #1", "Honorable mention, Regional Language Content Bounty", "Host, Mini Meetup Bounty #2"]),
-  },
-  {
-    slug: "jayesh-sharma",
-    name: "Jayesh Sharma",
-    xHandle: "jayesh_iot",
-    role: "Media Lead",
-    bio: "Hosted a meetup in Mini Meetup Bounty #2, then joined the core team as Media Lead. Shoots and edits every event recording, aftermovie and YouTube upload.",
-    meetupsHosted: 1,
-    highlights: J(["Core team: Media Lead", "Host, Mini Meetup Bounty #2"]),
-  },
-].map((c) => ({ official: true, x: `https://x.com/${c.xHandle}`, ...c }));
-
-// ---------------------------------------------------------------------------
 
 async function main() {
   console.log("Seeding ZcashIND with real programme data…");
@@ -916,7 +830,6 @@ async function main() {
   await prisma.aftermovie.deleteMany();
   await prisma.featuredPost.deleteMany();
   await prisma.update.deleteMany();
-  await prisma.contributor.deleteMany();
   // Community submissions are never seeded, but a reseed starts clean.
   await prisma.meetup.deleteMany();
 
@@ -929,8 +842,6 @@ async function main() {
   for (const p of featuredPosts) await prisma.featuredPost.create({ data: { ...p, sortOrder: i++ } });
 
   for (const u of updates) await prisma.update.create({ data: u });
-
-  for (const c of contributors) await prisma.contributor.create({ data: c });
 
   for (const b of bounties) {
     const { winners = [], submissions = [], ...data } = b as (typeof bounties)[number] & {
@@ -959,7 +870,6 @@ async function main() {
     aftermovies: await prisma.aftermovie.count(),
     featuredPosts: await prisma.featuredPost.count(),
     updates: await prisma.update.count(),
-    contributors: await prisma.contributor.count(),
     bounties: await prisma.bounty.count(),
     winners: await prisma.bountyWinner.count(),
     submissions: await prisma.bountySubmission.count(),

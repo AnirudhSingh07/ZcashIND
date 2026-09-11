@@ -16,7 +16,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/bounties/irl/submit",
     "/clubs",
     "/host",
-    "/contributors",
     "/ecosystem",
     "/pay",
     "/updates",
@@ -36,9 +35,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { slug: true },
     })
   ).map((e) => `/events/${e.slug}`);
-  const contributors = (
-    await prisma.contributor.findMany({ select: { slug: true } })
-  ).map((c) => `/contributors/${c.slug}`);
 
   const all = [
     ...staticPaths,
@@ -46,7 +42,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...bounties,
     ...cities,
     ...events,
-    ...contributors,
   ];
 
   return all.map((path) => ({

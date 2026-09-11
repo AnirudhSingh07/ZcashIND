@@ -19,7 +19,6 @@ const NAV: NavLink[] = [
 
 const ECOSYSTEM: NavLink[] = [
   { href: "/pay", label: "Pay with ZEC", desc: "Indian businesses that accept Zcash" },
-  { href: "/contributors", label: "Contributors", desc: "The people making it happen" },
   { href: "/ecosystem", label: "Ecosystem overview", desc: "Protocol, tools, governance" },
   { href: "/updates", label: "What's new", desc: "Milestones and announcements" },
   { href: site.links.zecmap, label: "ZecMap", external: true },

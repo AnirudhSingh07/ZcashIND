@@ -166,11 +166,8 @@ export default async function IrlBountyPage() {
         <div className="card mt-12 border-gold/40 bg-gold/5 p-6 sm:p-8">
           <h2 className="text-2xl font-bold">The contributor path</h2>
           <p className="mt-2 max-w-2xl text-muted">
-            Hosting is how many people become recognised{" "}
-            <a href="/contributors" className="text-gold hover:underline">
-              Zcash India Contributors
-            </a>
-            . Consistent, real impact can unlock:
+            Hosting is how many people become recognised Zcash India Contributors. Consistent,
+            real impact can unlock:
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {PERKS.map((p) => (

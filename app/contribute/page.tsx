@@ -69,11 +69,7 @@ export default function ContributePage() {
         <div className="card mt-8 border-gold/40 bg-gold/5 p-6">
           <h2 className="text-lg font-semibold">Becoming a Contributor</h2>
           <p className="mt-2 text-muted">
-            Consistent, real impact can lead to recognised{" "}
-            <a href="/contributors" className="text-gold hover:underline">
-              Contributor
-            </a>{" "}
-            status, with perks like merch, a map feature, a certificate and
+            Consistent, real impact can lead to recognised Contributor status, with perks like merch, a map feature, a certificate and
             co-hosting opportunities. It is <strong>not automatic</strong>.
             Participation alone doesn't guarantee it. We look at impact, not
             numbers.
