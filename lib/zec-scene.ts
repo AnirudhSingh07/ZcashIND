@@ -98,7 +98,7 @@ function fbm(x: number, y: number, oct = 5, lac = 2.05, gain = 0.5) {
 // The wall
 // ---------------------------------------------------------------------------
 
-const WALL_W = 44;
+const WALL_W = 76;
 const WALL_H = 150;
 const WALL_TILT = THREE.MathUtils.degToRad(5); // past vertical: a 95 degree face
 
@@ -634,7 +634,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0xf2ead9, 14, 70);
 
-  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 400);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 400);
 
   // Sky ------------------------------------------------------------------------
   const sky = new THREE.Mesh(
@@ -689,7 +689,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   wall.rotation.x = WALL_TILT;
   scene.add(wall);
 
-  const geo = new THREE.PlaneGeometry(WALL_W, WALL_H, 140, 480);
+  const geo = new THREE.PlaneGeometry(WALL_W, WALL_H, 220, 460);
   const pos = geo.attributes.position as THREE.BufferAttribute;
   const colors = new Float32Array(pos.count * 3);
   const cA = new THREE.Color(0xc9b085); // warm sandstone
@@ -742,7 +742,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   // Holds and loose rock on the face
   const holdGeo = new THREE.DodecahedronGeometry(0.28, 0);
   const holdMat = new THREE.MeshStandardMaterial({ roughness: 0.9, vertexColors: false });
-  const holds = new THREE.InstancedMesh(holdGeo, holdMat, 1400);
+  const holds = new THREE.InstancedMesh(holdGeo, holdMat, 2200);
   holds.castShadow = true;
   holds.receiveShadow = true;
   const m4 = new THREE.Matrix4();
@@ -755,7 +755,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  for (let i = 0; i < 1400; i++) {
+  for (let i = 0; i < 2200; i++) {
     const x = (rnd() - 0.5) * WALL_W * 0.96;
     const y = (rnd() - 0.5) * WALL_H * 0.96;
     const z = relief(x, y);
@@ -1315,19 +1315,20 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     ropeMesh.castShadow = true;
     scene.add(ropeMesh);
 
-    // Camera: over the shoulder, a little below, looking up the line ----------
+    // Camera: side on, a little out from the face and below, looking up the line
+    // so the climber is in profile against the rock with the drop underneath.
     const target = rig.root.position;
     wallNormal.set(0, 0, 1).applyEuler(wall.rotation);
     const side = new THREE.Vector3(1, 0, 0);
     const desired = target
       .clone()
-      .addScaledVector(wallNormal, 5.8)
-      .addScaledVector(side, 2.4)
-      .addScaledVector(up, -2.1);
+      .addScaledVector(side, 6.2)
+      .addScaledVector(wallNormal, 2.0)
+      .addScaledVector(up, -1.2);
     // Handheld drift.
-    desired.x += Math.sin(clock * 0.37) * 0.12;
     desired.y += Math.sin(clock * 0.51) * 0.1;
-    const look = target.clone().addScaledVector(up, 1.15).addScaledVector(wallNormal, -0.3);
+    desired.z += Math.sin(clock * 0.37) * 0.12;
+    const look = target.clone().addScaledVector(up, 0.9).addScaledVector(wallNormal, 0.9);
     if (!camInit || reduce) {
       camPos.copy(desired);
       camLook.copy(look);
@@ -1341,7 +1342,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     camera.rotation.z += Math.sin(clock * 0.29) * 0.006;
 
     // Sun follows so the shadow map stays tight around the climber.
-    sun.position.copy(target).add(new THREE.Vector3(18, 26, 22));
+    sun.position.copy(target).add(new THREE.Vector3(26, 24, 16));
     sun.target.position.copy(target);
     sun.target.updateMatrixWorld();
 
