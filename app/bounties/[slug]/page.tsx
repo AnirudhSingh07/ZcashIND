@@ -47,8 +47,9 @@ export default async function BountyPage({
   const { slug } = await params;
   const b = await getBountyBySlug(slug);
   if (!b) notFound();
-  // The active IRL bounty has its own richer page with the leaderboard + form.
-  if (b.kind === "irl_meetup" && b.active) redirect("/bounties/irl");
+  // The IRL meetup programme has its own page with the leaderboard + form.
+  if (b.kind === "irl_meetup") redirect("/bounties/irl");
+  const raised = b.initialPrizePoolUsd != null && b.initialPrizePoolUsd < b.prizePoolUsd;
 
   const active = b.status === "active";
   const closed = b.endDate ? isPast(b.endDate) : false;
@@ -100,10 +101,20 @@ export default async function BountyPage({
           </div>
 
           {/* At a glance */}
-          <div className="card p-6">
+          <div className={`card p-6 ${raised ? "border-success/40" : ""}`}>
             <div className="text-xs text-muted/70">Prize pool</div>
-            <div className="text-4xl font-bold text-gold">${b.prizePoolUsd}</div>
-            <div className="text-sm text-muted">paid in {b.currency}</div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-4xl font-bold text-gold">${b.prizePoolUsd}</div>
+              {raised && (
+                <div className="text-sm text-muted line-through decoration-muted/60">${b.initialPrizePoolUsd}</div>
+              )}
+            </div>
+            <div className="text-sm text-muted">{active ? `in ${b.currency}` : `paid in ${b.currency}`}</div>
+            {raised && (
+              <p className="mt-2 rounded-lg bg-success/10 px-3 py-2 text-xs text-success">
+                Raised from ${b.initialPrizePoolUsd} to ${b.prizePoolUsd} because the community over-delivered.
+              </p>
+            )}
             <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-4 text-sm">
               <div>
                 <dt className="text-xs text-muted/70">Opened</dt>
@@ -233,14 +244,18 @@ export default async function BountyPage({
                     <tr key={w.id}>
                       <td className="px-4 py-3 font-medium">{w.place}</td>
                       <td className="px-4 py-3">
-                        <a
-                          href={`https://x.com/${w.xHandle}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-gold"
-                        >
-                          @{w.xHandle}
-                        </a>
+                        {w.xHandle ? (
+                          <a
+                            href={`https://x.com/${w.xHandle}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-gold"
+                          >
+                            @{w.xHandle}
+                          </a>
+                        ) : (
+                          <span>{w.name}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gold">${w.prizeUsd}</td>
                       <td className="px-4 py-3 text-right">
@@ -267,7 +282,7 @@ export default async function BountyPage({
                     posts={winnersWithLinks.map((w) => ({
                       id: w.id,
                       url: w.submissionUrl!,
-                      xHandle: w.xHandle,
+                      xHandle: w.xHandle ?? undefined,
                       label: `${w.place} · $${w.prizeUsd}`,
                     }))}
                   />

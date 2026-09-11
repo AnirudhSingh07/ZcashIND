@@ -33,8 +33,9 @@ export default async function BountiesIndex() {
             </Badge>
             <h1 className="text-4xl font-bold sm:text-5xl">Do something real. Get paid in ZEC.</h1>
             <p className="mt-4 text-lg text-muted">
-              Memes, videos, meetups, content in your language. Every bounty is small, public and
-              paid out in ZEC. {site.voice.impact}
+              One bounty a month. Memes, videos, meetups, content in your language. Every bounty is
+              small, public and paid out in ZEC, and the pool goes up when the community over-delivers.{" "}
+              {site.voice.impact}
             </p>
             <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
               <div>
@@ -57,7 +58,7 @@ export default async function BountiesIndex() {
           <h2 className="text-2xl font-bold">Open now</h2>
           <Badge tone="success">{active.length}</Badge>
         </div>
-        <p className="mt-1 text-muted">Enter before the window closes. Winners are announced on X.</p>
+        <p className="mt-1 text-muted">This month's bounty. Winners are announced on X when it closes.</p>
         {active.length === 0 ? (
           <div className="card mt-4 p-8 text-center text-muted">
             No bounty is open right now. Follow{" "}
@@ -78,7 +79,9 @@ export default async function BountiesIndex() {
           <h2 className="text-2xl font-bold">Completed</h2>
           <Badge tone="muted">{completed.length}</Badge>
         </div>
-        <p className="mt-1 text-muted">Every past bounty with its winners and the submissions that came in.</p>
+        <p className="mt-1 text-muted">
+          Every past bounty with its winners, what they won, and every submission that came in.
+        </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {completed.map((b) => (
             <BountyCard key={b.id} b={b} />

@@ -57,7 +57,12 @@ export function BountyCard({ b }: { b: PublicBounty }) {
       <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-line pt-4 text-sm">
         <div>
           <dt className="text-xs text-muted/70">Prize pool</dt>
-          <dd className="mt-0.5 font-semibold text-gold">${b.prizePoolUsd}</dd>
+          <dd className="mt-0.5 font-semibold text-gold">
+            ${b.prizePoolUsd}
+            {b.initialPrizePoolUsd != null && b.initialPrizePoolUsd < b.prizePoolUsd && (
+              <span className="ml-1 text-xs font-medium text-success">↑ from ${b.initialPrizePoolUsd}</span>
+            )}
+          </dd>
         </div>
         <div>
           <dt className="text-xs text-muted/70">{active ? "Winners" : "Submissions"}</dt>

@@ -79,14 +79,14 @@ export const ecosystem: {
   ],
   thisMonth: [
     {
-      label: "IRL meetup bounty, September 2026",
-      href: "/bounties/irl",
-      note: "Host a meetup, put your city on the map",
-    },
-    {
       label: "Explain Zcash Like I'm New",
       href: "/bounties/explain-zcash-september-2026",
-      note: "$150 in ZEC, 16 winners",
+      note: "This month's bounty: $150 in ZEC, 16 winners",
+    },
+    {
+      label: "Put your city on the map",
+      href: "/bounties/irl",
+      note: "Host a meetup, submit it, get a node number",
     },
     {
       label: "Zcash India Live (online series)",

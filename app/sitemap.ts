@@ -28,9 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const learn = getDocs("learn").map((d) => `/learn/${d.slug}`);
-  const bounties = (await getBounties())
-    .filter((b) => !(b.kind === "irl_meetup" && b.active)) // that one lives at /bounties/irl
-    .map((b) => `/bounties/${b.slug}`);
+  const bounties = (await getBounties()).map((b) => `/bounties/${b.slug}`);
   const cities = (await getCities()).map((c) => `/map/${cityToSlug(c.city)}`);
   const events = (
     await prisma.meetup.findMany({

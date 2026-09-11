@@ -160,8 +160,10 @@ model Bounty {
   submissionCount       Int     @default(0)
   winnerCount           Int     @default(0)
 
-  prizePoolUsd Int    @default(0)
-  currency     String @default("ZEC")
+  prizePoolUsd        Int    @default(0)
+  /// The pool announced at launch, when it was later increased.
+  initialPrizePoolUsd Int?
+  currency            String @default("ZEC")
   prizes       String @default("[]") // JSON: [{ place, amountUsd, note }]
 
   // IRL meetup config (only meaningful for kind = irl_meetup).
@@ -188,7 +190,10 @@ model BountyWinner {
   id            String  @id @default(cuid())
   bountyId      String
   bounty        Bounty  @relation(fields: [bountyId], references: [id], onDelete: Cascade)
-  xHandle       String
+  /// Display name (usually the handle; a plain name when the handle is unknown).
+  name          String  @default("")
+  /// X handle without the @, when known. Drives the profile link.
+  xHandle       String?
   // e.g. "1st", "2nd", "3rd", "Honorable mention", "Successful host", "Community pick"
   place         String
   prizeUsd      Int

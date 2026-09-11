@@ -391,6 +391,7 @@ export type BountyJudging = { label: string; weight: number };
 export type Bounty = {
   slug: string;
   title: string;
+  status: "active" | "completed";
   period: string;
   windowLabel: string;
   prizePoolUsd: number;
@@ -401,7 +402,8 @@ export type Bounty = {
 
 export type PublicBountyWinner = {
   id: string;
-  xHandle: string;
+  name: string;
+  xHandle: string | null;
   place: string;
   prizeUsd: number;
   submissionUrl: string | null;
@@ -431,6 +433,8 @@ export type PublicBounty = {
   submissionCount: number;
   winnerCount: number;
   prizePoolUsd: number;
+  /** The pool announced at launch, when it was later raised. */
+  initialPrizePoolUsd: number | null;
   currency: string;
   prizes: BountyPrize[];
   period: string | null;
@@ -459,7 +463,7 @@ const splitList = (s: string | null | undefined) =>
 
 type BountyRow = NonNullable<Awaited<ReturnType<typeof prisma.bounty.findFirst>>>;
 type BountyWithRels = BountyRow & {
-  winners?: { id: string; xHandle: string; place: string; prizeUsd: number; submissionUrl: string | null }[];
+  winners?: { id: string; name: string; xHandle: string | null; place: string; prizeUsd: number; submissionUrl: string | null }[];
   submissions?: { id: string; xHandle: string | null; url: string }[];
 };
 
@@ -482,6 +486,7 @@ function toPublicBounty(r: BountyWithRels): PublicBounty {
     submissionCount: r.submissionCount,
     winnerCount: r.winnerCount,
     prizePoolUsd: r.prizePoolUsd,
+    initialPrizePoolUsd: r.initialPrizePoolUsd,
     currency: r.currency,
     prizes: safeJson<BountyPrize[]>(r.prizes, []),
     period: r.period,
@@ -496,6 +501,7 @@ function toPublicBounty(r: BountyWithRels): PublicBounty {
     active: r.active,
     winners: (r.winners ?? []).map((w) => ({
       id: w.id,
+      name: w.name || (w.xHandle ? `@${w.xHandle}` : "Unknown"),
       xHandle: w.xHandle,
       place: w.place,
       prizeUsd: w.prizeUsd,
@@ -509,9 +515,14 @@ function toPublicBounty(r: BountyWithRels): PublicBounty {
   };
 }
 
-/** All bounties: active first, then completed, newest first within each. */
-export async function getBounties(): Promise<PublicBounty[]> {
+/**
+ * All bounties for the public archive: active first, then completed, newest
+ * first within each. The standing IRL meetup programme (kind = irl_meetup,
+ * which lives at /bounties/irl and feeds the map) is excluded unless asked for.
+ */
+export async function getBounties(opts: { includeIrl?: boolean } = {}): Promise<PublicBounty[]> {
   const rows = await prisma.bounty.findMany({
+    where: opts.includeIrl ? undefined : { kind: { not: "irl_meetup" } },
     orderBy: { startDate: "desc" },
     include: {
       winners: { orderBy: { sortOrder: "asc" } },
@@ -555,6 +566,7 @@ export async function getBounty(): Promise<Bounty> {
     return {
       slug: "irl",
       title: "IRL Meetup Bounty",
+      status: "active",
       period: b.period,
       windowLabel: b.windowLabel,
       prizePoolUsd: b.prizePoolUsd,
@@ -568,6 +580,7 @@ export async function getBounty(): Promise<Bounty> {
   return {
     slug: pub.slug,
     title: pub.title,
+    status: pub.status,
     period: pub.period ?? pub.startDate.slice(0, 7),
     windowLabel: pub.windowLabel ?? "",
     prizePoolUsd: pub.prizePoolUsd,

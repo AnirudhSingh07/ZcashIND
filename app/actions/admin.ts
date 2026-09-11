@@ -381,6 +381,7 @@ function bountyFields(formData: FormData) {
       submissionCount: num("submissionCount"),
       winnerCount: num("winnerCount"),
       prizePoolUsd: num("prizePoolUsd"),
+      initialPrizePoolUsd: str("initialPrizePoolUsd") ? num("initialPrizePoolUsd") : null,
       prizes: parsePrizes(str("prizes")),
       period: str("period") || null,
       windowLabel: str("windowLabel") || null,
@@ -444,18 +445,21 @@ export async function addBountyWinner(formData: FormData) {
   await assertAdmin();
   const bountyId = String(formData.get("bountyId"));
   const xHandle = String(formData.get("xHandle") ?? "").trim().replace(/^@/, "");
+  const nameInput = String(formData.get("name") ?? "").trim();
+  const name = nameInput || (xHandle ? `@${xHandle}` : "");
   const place = String(formData.get("place") ?? "").trim();
   const prizeUsd = Number(formData.get("prizeUsd")) || 0;
   const submissionUrl = String(formData.get("submissionUrl") ?? "").trim();
   const bounty = await prisma.bounty.findUnique({ where: { id: bountyId } });
-  if (!bounty || !xHandle || !place) redirect("/admin/bounties?error=invalid");
+  if (!bounty || !name || !place) redirect("/admin/bounties?error=invalid");
   if (submissionUrl && !X_STATUS.test(submissionUrl)) redirect("/admin/bounties?error=invalid");
 
   const last = await prisma.bountyWinner.aggregate({ where: { bountyId }, _max: { sortOrder: true } });
   await prisma.bountyWinner.create({
     data: {
       bountyId,
-      xHandle,
+      name,
+      xHandle: xHandle || null,
       place,
       prizeUsd,
       submissionUrl: submissionUrl || null,

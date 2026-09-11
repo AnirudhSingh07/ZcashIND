@@ -66,8 +66,8 @@ export default async function IrlBountyPage() {
         </Link>
         {/* Hero */}
         <div className="mt-6 max-w-2xl">
-          <Badge tone="success" className="mb-4">
-            ● Open now: {bounty.title}
+          <Badge tone={bounty.status === "active" ? "success" : "muted"} className="mb-4">
+            {bounty.status === "active" ? `● Open now: ${bounty.title}` : `${bounty.title}: window closed`}
           </Badge>
           <h1 className="text-4xl font-bold sm:text-5xl">
             {site.voice.putCityOnMap}
@@ -78,8 +78,21 @@ export default async function IrlBountyPage() {
             {site.voice.notInfluencers} {site.voice.impact}
           </p>
           <p className="mt-3 font-medium text-gold">{bounty.windowLabel}</p>
+          {bounty.status !== "active" && (
+            <div className="card mt-4 border-line bg-surface-2 p-4 text-sm text-muted">
+              The prize window for this bounty has closed. You can still submit a meetup: verified
+              meetups go on the map with a node number, and the next meetup bounty will be announced
+              on X. See what is open now on the{" "}
+              <Link href="/bounties" className="text-gold hover:underline">
+                bounties page
+              </Link>
+              .
+            </div>
+          )}
           <div className="mt-6 flex flex-wrap gap-3">
-            <ButtonLink href="/bounties/irl/submit">Submit your meetup</ButtonLink>
+            <ButtonLink href="/bounties/irl/submit">
+              {bounty.status === "active" ? "Submit your meetup" : "Add a meetup to the map"}
+            </ButtonLink>
             <ButtonLink href="/host" variant="ghost">
               Get the host kit
             </ButtonLink>

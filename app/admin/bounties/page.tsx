@@ -137,7 +137,16 @@ function BountyFields({ b }: { b?: BountyRow }) {
       </div>
       <div>
         <label className={labelCls}>Prize pool (USD)</label>
-        <input type="number" name="prizePoolUsd" defaultValue={b?.prizePoolUsd ?? 0} className={inputCls} />
+        <div className="grid grid-cols-2 gap-2">
+          <input type="number" name="prizePoolUsd" defaultValue={b?.prizePoolUsd ?? 0} className={inputCls} />
+          <input
+            type="number"
+            name="initialPrizePoolUsd"
+            defaultValue={b?.initialPrizePoolUsd ?? ""}
+            placeholder="Launched at (if raised)"
+            className={inputCls}
+          />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -296,7 +305,7 @@ export default async function AdminBounties({
                     {b.winners.map((w) => (
                       <li key={w.id} className="flex items-center gap-2 py-1.5">
                         <span className="w-32 shrink-0 text-muted">{w.place}</span>
-                        <span className="font-medium">@{w.xHandle}</span>
+                        <span className="font-medium">{w.xHandle ? `@${w.xHandle}` : w.name}</span>
                         <span className="text-gold">${w.prizeUsd}</span>
                         {w.submissionUrl && (
                           <a href={w.submissionUrl} target="_blank" className="text-xs text-muted hover:text-gold">
@@ -313,10 +322,11 @@ export default async function AdminBounties({
                   </ul>
                   <form action={addBountyWinner} className="mt-3 grid grid-cols-2 gap-2">
                     <input type="hidden" name="bountyId" value={b.id} />
-                    <input name="xHandle" placeholder="@handle" className={inputCls} />
+                    <input name="xHandle" placeholder="@handle (if known)" className={inputCls} />
+                    <input name="name" placeholder="Display name (if no handle)" className={inputCls} />
                     <input name="place" placeholder="1st / Honorable mention" className={inputCls} />
                     <input type="number" name="prizeUsd" placeholder="Prize USD" className={inputCls} />
-                    <input name="submissionUrl" placeholder="https://x.com/…/status/…" className={inputCls} />
+                    <input name="submissionUrl" placeholder="https://x.com/…/status/…" className={`${inputCls} col-span-2`} />
                     <button className="btn-ghost col-span-2 px-4 py-1.5 text-sm">Add winner</button>
                   </form>
                 </div>
