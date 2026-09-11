@@ -12,7 +12,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const ADMIN_HOST = (process.env.ADMIN_HOST || "admin.zcashind.com").toLowerCase();
 const PUBLIC_HOST = (process.env.NEXT_PUBLIC_SITE_URL || "https://zcashind.com").replace(/^https?:\/\//, "").toLowerCase();
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const host = (req.headers.get("host") || "").toLowerCase().split(":")[0];
   const { pathname } = req.nextUrl;
   const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");

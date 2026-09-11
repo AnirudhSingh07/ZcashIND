@@ -123,7 +123,7 @@ The site runs as one Vercel project (`zcashind`) serving two hostnames:
 - `zcashind.com` (and `www`, which redirects): the public site. `/admin` is not served here.
 - `admin.zcashind.com`: only the admin. Everything else redirects to `/admin`.
 
-`middleware.ts` does the split by hostname (`ADMIN_HOST`, `NEXT_PUBLIC_SITE_URL`). Localhost and preview
+`proxy.ts` does the split by hostname (`ADMIN_HOST`, `NEXT_PUBLIC_SITE_URL`). Localhost and preview
 deployments serve both.
 
 Infrastructure: Prisma Postgres (Vercel Marketplace) for the database, Vercel Blob for photo and video
