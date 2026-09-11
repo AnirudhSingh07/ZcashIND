@@ -454,8 +454,8 @@ class Sound {
 // The climber rig
 // ---------------------------------------------------------------------------
 
-type Limb = { shoulder: THREE.Group; elbow: THREE.Group; hand: THREE.Object3D };
-type Leg = { hip: THREE.Group; knee: THREE.Group; foot: THREE.Object3D };
+type Limb = { shoulder: THREE.Group; elbow: THREE.Group; hand: THREE.Object3D; l1: number; l2: number };
+type Leg = { hip: THREE.Group; knee: THREE.Group; foot: THREE.Object3D; l1: number; l2: number };
 
 interface Rig {
   root: THREE.Group; // at the pelvis; +y up, faces the wall (-z is toward the wall)
@@ -479,155 +479,247 @@ function capsule(r: number, len: number, mat: THREE.Material, sx = 1, sz = 1) {
 }
 
 function buildClimber(): Rig {
-  const gold = new THREE.MeshStandardMaterial({ color: 0xf4b728, roughness: 0.75, metalness: 0.02 });
-  const goldDark = new THREE.MeshStandardMaterial({ color: 0xb8850f, roughness: 0.8 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xf4b728, roughness: 0.62, metalness: 0.02 });
+  const goldDark = new THREE.MeshStandardMaterial({ color: 0xb8850f, roughness: 0.7 });
   const skin = new THREE.MeshStandardMaterial({ color: 0xd2a077, roughness: 0.7 });
-  const pants = new THREE.MeshStandardMaterial({ color: 0x2f2a26, roughness: 0.9 });
-  const boot = new THREE.MeshStandardMaterial({ color: 0x1a1714, roughness: 0.95 });
-  const navy = new THREE.MeshStandardMaterial({ color: 0x1c3a5f, roughness: 0.4, metalness: 0.15 });
+  const pants = new THREE.MeshStandardMaterial({ color: 0x1f2a3a, roughness: 0.85 });
+  const boot = new THREE.MeshStandardMaterial({ color: 0x1a1714, roughness: 0.9 });
+  const navy = new THREE.MeshStandardMaterial({ color: 0x1c3a5f, roughness: 0.45, metalness: 0.1 });
   const strap = new THREE.MeshStandardMaterial({ color: 0x22201d, roughness: 0.9 });
-  const metal = new THREE.MeshStandardMaterial({ color: 0xb9bcc2, roughness: 0.35, metalness: 0.9 });
-  const pack = new THREE.MeshStandardMaterial({ color: 0x6b4708, roughness: 0.85 });
+  const glove = new THREE.MeshStandardMaterial({ color: 0x2a2623, roughness: 0.85 });
+  const metal = new THREE.MeshStandardMaterial({ color: 0xc2c6cc, roughness: 0.3, metalness: 0.95 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x8e9299, roughness: 0.35, metalness: 0.9 });
+  const pack = new THREE.MeshStandardMaterial({ color: 0x5b3d0a, roughness: 0.85 });
   const mat = new THREE.MeshStandardMaterial({ color: 0x8a5e12, roughness: 0.9 });
+  const rope = new THREE.MeshStandardMaterial({ color: 0xd8462f, roughness: 0.8 });
+  const lens = new THREE.MeshStandardMaterial({ color: 0x1b2430, roughness: 0.15, metalness: 0.6 });
 
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
 
-  // Pelvis + harness
-  const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.2, 2, 2, 2), pants);
-  pelvis.castShadow = true;
+  // Pelvis + harness with gear loops, carabiners and ice screws
+  const pelvis = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.22, 2, 2, 2), pants);
   body.add(pelvis);
-  const harness = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.028, 8, 24), strap);
+  const harness = new THREE.Mesh(new THREE.TorusGeometry(0.21, 0.03, 8, 24), strap);
   harness.rotation.x = Math.PI / 2;
   harness.position.y = 0.06;
   body.add(harness);
   for (const sx of [-1, 1]) {
     const loop = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.022, 8, 16), strap);
     loop.rotation.x = Math.PI / 2;
-    loop.position.set(sx * 0.11, -0.08, 0);
+    loop.position.set(sx * 0.12, -0.08, 0);
     body.add(loop);
+    // Carabiners on the gear loops
+    for (let i = 0; i < 2; i++) {
+      const c = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.008, 6, 14), metal);
+      c.position.set(sx * 0.2, -0.02 - i * 0.05, 0.05 + i * 0.06);
+      c.rotation.y = Math.PI / 2;
+      body.add(c);
+    }
+    // Ice screws
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 8), steel);
+    screw.position.set(sx * 0.2, -0.1, -0.06);
+    screw.rotation.z = sx * 0.2;
+    body.add(screw);
   }
   const chalkBag = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.12, 12), goldDark);
   chalkBag.position.set(0.02, -0.02, 0.2);
   body.add(chalkBag);
   const tieIn = new THREE.Object3D();
-  tieIn.position.set(0, 0.06, -0.19);
+  tieIn.position.set(0, 0.06, -0.2);
   body.add(tieIn);
   const carab = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.01, 6, 14), metal);
   carab.position.copy(tieIn.position);
   carab.position.y += 0.02;
   body.add(carab);
 
-  // Torso
+  // Torso: a puffy down jacket with baffles, hood rolled at the neck
   const torso = new THREE.Group();
   torso.position.y = 0.12;
   body.add(torso);
-  const chest = capsule(0.2, 0.34, gold, 1.35, 0.8);
+  const chest = capsule(0.235, 0.34, gold, 1.35, 0.85);
   chest.position.y = 0.3;
   torso.add(chest);
-  // Jacket seams / zipper
-  const zip = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.46, 0.012), goldDark);
-  zip.position.set(0, 0.3, -0.17);
+  for (const yy of [0.14, 0.26, 0.38, 0.5]) {
+    const baffle = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.012, 6, 28), goldDark);
+    baffle.rotation.x = Math.PI / 2;
+    baffle.scale.set(1.35, 0.85, 1);
+    baffle.position.y = yy;
+    torso.add(baffle);
+  }
+  const zip = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.46, 0.012), goldDark);
+  zip.position.set(0, 0.3, -0.2);
   torso.add(zip);
-  // Backpack with mat, straps and the shield decal
-  const bag = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.17, 2, 2, 2), pack);
-  bag.position.set(0, 0.32, 0.25);
-  bag.castShadow = true;
+  const hood = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), gold);
+  hood.scale.set(1.7, 0.55, 0.9);
+  hood.position.set(0, 0.6, 0.16);
+  torso.add(hood);
+
+  // Backpack: mat, rope coil, side pockets, straps, the shield
+  const bag = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.44, 0.19, 2, 2, 2), pack);
+  bag.position.set(0, 0.3, 0.28);
   torso.add(bag);
-  const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.34, 12), mat);
-  roll.rotation.z = Math.PI / 2;
-  roll.position.set(0, 0.58, 0.25);
-  torso.add(roll);
-  const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.16, 10), navy);
-  bottle.position.set(0.18, 0.28, 0.24);
-  torso.add(bottle);
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.08, 0.2), goldDark);
+  lid.position.set(0, 0.55, 0.28);
+  torso.add(lid);
   for (const sx of [-1, 1]) {
-    const st = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.4, 0.02), strap);
-    st.position.set(sx * 0.1, 0.32, -0.02);
+    const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.22, 0.14), pack);
+    pocket.position.set(sx * 0.18, 0.24, 0.28);
+    torso.add(pocket);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.42, 0.02), strap);
+    st.position.set(sx * 0.1, 0.32, -0.03);
     torso.add(st);
   }
-  const decal = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.2, 0.2),
-    new THREE.MeshStandardMaterial({ map: shieldTexture(), transparent: true, roughness: 0.8 }),
-  );
-  decal.position.set(0, 0.32, 0.337);
+  const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.34, 12), mat);
+  roll.rotation.z = Math.PI / 2;
+  roll.position.set(0, 0.06, 0.3);
+  torso.add(roll);
+  const coil = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.035, 8, 20), rope);
+  coil.position.set(0, 0.62, 0.3);
+  coil.rotation.x = Math.PI / 2;
+  torso.add(coil);
+  const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.16, 10), navy);
+  bottle.position.set(0.19, 0.4, 0.3);
+  torso.add(bottle);
+  const shieldTex = shieldTexture();
+  const decal = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.2), new THREE.MeshStandardMaterial({ map: shieldTex, transparent: true, roughness: 0.8 }));
+  decal.position.set(0, 0.3, 0.377);
   torso.add(decal);
 
-  // Head + helmet + headlamp
+  // Head: balaclava, helmet with side shields, goggles, headlamp
   const head = new THREE.Group();
   head.position.y = 0.66;
   torso.add(head);
-  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.115, 18, 14), skin);
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.115, 18, 14), navy); // balaclava
   skull.position.y = 0.1;
-  skull.castShadow = true;
   head.add(skull);
-  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.135, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.58), navy);
+  const face = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.35), skin);
+  face.position.set(0, 0.1, -0.03);
+  face.rotation.x = -Math.PI / 2;
+  head.add(face);
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.14, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.58), navy);
   helmet.position.y = 0.1;
-  helmet.castShadow = true;
   head.add(helmet);
-  const brim = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 24), gold);
+  const brim = new THREE.Mesh(new THREE.TorusGeometry(0.133, 0.012, 6, 24), gold);
   brim.rotation.x = Math.PI / 2;
   brim.position.y = 0.075;
   head.add(brim);
+  for (const sx of [-1, 1]) {
+    const sd = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.09), new THREE.MeshStandardMaterial({ map: shieldTex, transparent: true, roughness: 0.6 }));
+    sd.position.set(sx * 0.141, 0.12, 0.01);
+    sd.rotation.y = sx * Math.PI / 2;
+    head.add(sd);
+  }
+  const goggle = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.075, 0.06, 2, 2, 2), lens);
+  goggle.position.set(0, 0.11, -0.115);
+  head.add(goggle);
+  const goggleFrame = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.085, 0.02), strap);
+  goggleFrame.position.set(0, 0.11, -0.095);
+  head.add(goggleFrame);
+  const gStrap = new THREE.Mesh(new THREE.TorusGeometry(0.128, 0.012, 6, 24), strap);
+  gStrap.rotation.x = Math.PI / 2;
+  gStrap.position.y = 0.11;
+  head.add(gStrap);
   const lampBody = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.035, 0.03), strap);
-  lampBody.position.set(0, 0.11, -0.135);
+  lampBody.position.set(0, 0.18, -0.135);
   head.add(lampBody);
   const lampLens = new THREE.Mesh(new THREE.CircleGeometry(0.014, 12), new THREE.MeshStandardMaterial({ color: 0xfff2c4, emissive: 0xffe9a8, emissiveIntensity: 1.2 }));
-  lampLens.position.set(0, 0.11, -0.151);
+  lampLens.position.set(0, 0.18, -0.151);
   head.add(lampLens);
   const lamp = new THREE.SpotLight(0xffe7b0, 0, 6, Math.PI / 6, 0.6, 1.2);
-  lamp.position.set(0, 0.11, -0.15);
+  lamp.position.set(0, 0.18, -0.15);
   lamp.target.position.set(0, 0.2, -2);
   head.add(lamp);
   head.add(lamp.target);
 
-  // Arms: shoulder -> elbow -> hand
+  // Arms: shoulder -> elbow -> gloved hand with an ice axe
   const makeArm = (sx: number): Limb => {
     const shoulder = new THREE.Group();
-    shoulder.position.set(sx * 0.25, 0.5, 0);
+    shoulder.position.set(sx * 0.27, 0.5, 0);
     torso.add(shoulder);
-    const upper = capsule(0.06, 0.24, gold);
+    const upper = capsule(0.075, 0.22, gold);
     upper.position.y = -0.15;
     shoulder.add(upper);
+    const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.01, 6, 16), goldDark);
+    cuff.rotation.x = Math.PI / 2;
+    cuff.position.y = -0.27;
+    shoulder.add(cuff);
     const elbow = new THREE.Group();
     elbow.position.y = -0.3;
     shoulder.add(elbow);
-    const fore = capsule(0.05, 0.22, skin);
-    fore.position.y = -0.14;
+    const fore = capsule(0.065, 0.2, gold);
+    fore.position.y = -0.13;
     elbow.add(fore);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), skin);
-    hand.scale.set(1, 1.2, 0.7);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.062, 12, 10), glove);
+    hand.scale.set(1, 1.15, 0.8);
     hand.position.y = -0.29;
-    hand.castShadow = true;
     elbow.add(hand);
-    return { shoulder, elbow, hand };
+    // Ice axe held in the hand: shaft continues past the hand, pick at the end
+    const axe = new THREE.Group();
+    axe.position.y = -0.29;
+    elbow.add(axe);
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.5, 8), strap);
+    shaft.position.y = -0.14;
+    axe.add(shaft);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.1, 8), gold);
+    grip.position.y = 0.03;
+    axe.add(grip);
+    const headAxe = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.025, 0.18), steel);
+    headAxe.position.set(0, -0.39, -0.06);
+    axe.add(headAxe);
+    const pick = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.09, 6), steel);
+    pick.rotation.x = -Math.PI / 2;
+    pick.position.set(0, -0.395, -0.19);
+    axe.add(pick);
+    const leash = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.005, 5, 10), strap);
+    leash.position.y = 0.0;
+    axe.add(leash);
+    return { shoulder, elbow, hand, l1: 0.3, l2: 0.29 };
   };
   const armL = makeArm(-1);
   const armR = makeArm(1);
 
-  // Legs: hip -> knee -> foot
+  // Legs: hip -> knee -> boot with gaiter and crampons
   const makeLeg = (sx: number): Leg => {
     const hip = new THREE.Group();
     hip.position.set(sx * 0.12, -0.08, 0);
     body.add(hip);
-    const thigh = capsule(0.08, 0.32, pants);
+    const thigh = capsule(0.085, 0.32, pants);
     thigh.position.y = -0.2;
     hip.add(thigh);
     const knee = new THREE.Group();
     knee.position.y = -0.4;
     hip.add(knee);
-    const shin = capsule(0.065, 0.3, pants);
-    shin.position.y = -0.18;
+    const shin = capsule(0.07, 0.28, pants);
+    shin.position.y = -0.17;
     knee.add(shin);
-    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.26, 2, 2, 2), boot);
+    const gaiter = capsule(0.078, 0.12, navy);
+    gaiter.position.y = -0.3;
+    knee.add(gaiter);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.28, 2, 2, 2), boot);
     foot.position.set(0, -0.4, -0.06);
-    foot.castShadow = true;
     knee.add(foot);
-    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.115, 0.02, 0.27), goldDark);
-    sole.position.set(0, -0.455, -0.06);
+    const sole = new THREE.Mesh(new THREE.BoxGeometry(0.125, 0.025, 0.29), goldDark);
+    sole.position.set(0, -0.46, -0.06);
     knee.add(sole);
-    return { hip, knee, foot };
+    // Crampon: frame + front points + downward spikes
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.012, 0.27), steel);
+    frame.position.set(0, -0.475, -0.06);
+    knee.add(frame);
+    for (const [px, pz] of [[-0.04, -0.18], [0.04, -0.18], [-0.045, -0.06], [0.045, -0.06], [-0.04, 0.05], [0.04, 0.05]]) {
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.04, 5), steel);
+      spike.rotation.x = Math.PI;
+      spike.position.set(px, -0.5, pz);
+      knee.add(spike);
+    }
+    for (const px of [-0.03, 0.03]) {
+      const front = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.05, 5), steel);
+      front.rotation.x = -Math.PI / 2;
+      front.position.set(px, -0.47, -0.22);
+      knee.add(front);
+    }
+    return { hip, knee, foot, l1: 0.4, l2: 0.43 };
   };
   const legL = makeLeg(-1);
   const legR = makeLeg(1);
@@ -640,6 +732,51 @@ function buildClimber(): Rig {
   });
 
   return { root, body, torso, head, armL, armR, legL, legR, tieIn, lamp };
+}
+
+// ---------------------------------------------------------------------------
+// Two-bone IK in world space
+// ---------------------------------------------------------------------------
+
+const _ikA = new THREE.Vector3();
+const _ikB = new THREE.Vector3();
+const _ikC = new THREE.Vector3();
+const _ikQ = new THREE.Quaternion();
+const _ikM = new THREE.Matrix4();
+const _ikPQ = new THREE.Quaternion();
+
+/** Orient `obj` so its local -Y points along `dir` (world), with local +Z toward `hint`. */
+function aimMinusY(obj: THREE.Object3D, dir: THREE.Vector3, hint: THREE.Vector3) {
+  const y = _ikA.copy(dir).normalize().negate(); // local +y
+  const z = _ikB.copy(hint).addScaledVector(y, -hint.dot(y));
+  if (z.lengthSq() < 1e-6) z.set(0, 0, 1).addScaledVector(y, -y.z);
+  z.normalize();
+  const x = _ikC.crossVectors(y, z).normalize();
+  _ikM.makeBasis(x, y, z);
+  _ikQ.setFromRotationMatrix(_ikM);
+  obj.parent!.getWorldQuaternion(_ikPQ);
+  obj.quaternion.copy(_ikPQ.invert().multiply(_ikQ));
+}
+
+const _S = new THREE.Vector3();
+const _D = new THREE.Vector3();
+const _P = new THREE.Vector3();
+const _E = new THREE.Vector3();
+/** Point a two-bone chain (upper group -> lower group -> end at local -l2) at `target`, bending toward `pole`. */
+function solveTwoBone(upper: THREE.Group, lower: THREE.Group, l1: number, l2: number, target: THREE.Vector3, pole: THREE.Vector3) {
+  upper.getWorldPosition(_S);
+  _D.subVectors(target, _S);
+  const dist = THREE.MathUtils.clamp(_D.length(), 0.05, l1 + l2 - 0.01);
+  _D.normalize();
+  const cosA = THREE.MathUtils.clamp((l1 * l1 + dist * dist - l2 * l2) / (2 * l1 * dist), -1, 1);
+  const a = Math.acos(cosA);
+  _P.copy(pole).addScaledVector(_D, -pole.dot(_D));
+  if (_P.lengthSq() < 1e-6) _P.set(0, 0, 1).addScaledVector(_D, -_D.z);
+  _P.normalize();
+  _E.copy(_S).addScaledVector(_D, l1 * cosA).addScaledVector(_P, l1 * Math.sin(a));
+  aimMinusY(upper, _ikA.subVectors(_E, _S), _P);
+  upper.updateMatrixWorld(true);
+  aimMinusY(lower, _ikA.subVectors(target, _E), _P);
 }
 
 // ---------------------------------------------------------------------------
@@ -669,7 +806,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.0;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.domElement.style.display = "block";
   renderer.domElement.style.width = "100%";
@@ -677,7 +814,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0xebe5d8, 50, 300);
+  scene.fog = new THREE.Fog(0xe6edf5, 45, 280);
 
   const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 900);
 
@@ -688,9 +825,9 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
       side: THREE.BackSide,
       depthWrite: false,
       uniforms: {
-        top: { value: new THREE.Color(0xb9c8d6) },
-        mid: { value: new THREE.Color(0xe9e6dc) },
-        bot: { value: new THREE.Color(0xece5d6) },
+        top: { value: new THREE.Color(0x6f9ccc) },
+        mid: { value: new THREE.Color(0xd8e4f0) },
+        bot: { value: new THREE.Color(0xe4ebf2) },
       },
       vertexShader: `varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
       fragmentShader: `uniform vec3 top; uniform vec3 mid; uniform vec3 bot; varying vec3 vP;
@@ -700,9 +837,9 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   scene.add(sky);
 
   // Lights ---------------------------------------------------------------------
-  const hemi = new THREE.HemisphereLight(0xfff5e0, 0x9a8a68, 0.9);
+  const hemi = new THREE.HemisphereLight(0xdfeaf8, 0x8fa4bc, 1.05);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff0d2, 2.6);
+  const sun = new THREE.DirectionalLight(0xfff6e8, 2.9);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.near = 1;
@@ -713,13 +850,13 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   sun.shadow.normalBias = 0.03;
   scene.add(sun);
   scene.add(sun.target);
-  const rim = new THREE.DirectionalLight(0xf4b728, 0.5);
+  const rim = new THREE.DirectionalLight(0xbfd8ff, 0.6);
   rim.position.set(-20, 10, -8);
   scene.add(rim);
 
   // Sun disc
   const sunSprite = new THREE.Sprite(
-    new THREE.SpriteMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.9, depthWrite: false, fog: false }),
+    new THREE.SpriteMaterial({ color: 0xfff8ea, transparent: true, opacity: 0.9, depthWrite: false, fog: false }),
   );
   sunSprite.scale.set(28, 28, 1);
   sunSprite.position.set(260, 190, -420);
@@ -732,13 +869,15 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   // Terrain ----------------------------------------------------------------------
   // Two meshes sharing one material: a fine patch around the peak (where the
   // climber is) and a coarse far terrain that dips slightly under the patch.
-  const cRock = new THREE.Color(0xb59c74);
-  const cRockDark = new THREE.Color(0x6e5a3f);
-  const cRockLight = new THREE.Color(0xd8c7a3);
-  const cScree = new THREE.Color(0x9c8b6a);
-  const cGrass = new THREE.Color(0x6f7f4e);
-  const cForest = new THREE.Color(0x4f6140);
-  const cSnow = new THREE.Color(0xfbf9f3);
+  const cRock = new THREE.Color(0x6b665f);
+  const cRockDark = new THREE.Color(0x3a3634);
+  const cRockLight = new THREE.Color(0x9a948c);
+  const cScree = new THREE.Color(0x7d7a74);
+  const cGrass = new THREE.Color(0x5d6b4c);
+  const cForest = new THREE.Color(0x35482f);
+  const cSnow = new THREE.Color(0xf6f8fb);
+  const cSnowShade = new THREE.Color(0xc9d6e6);
+  const cIce = new THREE.Color(0xbfd6e8);
   const tmp = new THREE.Color();
   const nrm = new THREE.Vector3();
   const FINE = 84;
@@ -769,11 +908,19 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
       const nz = 0.5 + 0.5 * fbm(x * 0.09 + 11, z * 0.09 - 4, 3);
       tmp.copy(cRockDark).lerp(cRock, THREE.MathUtils.clamp(0.3 + nz * 0.5 + flat * 0.25, 0, 1));
       tmp.lerp(cRockLight, nz * nz * 0.35);
-      if (y < 34 && flat > 0.55) tmp.lerp(cForest, THREE.MathUtils.clamp((0.55 - flat + 0.4) * (1 - y / 34), 0, 0.85));
-      if (y < 44 && flat > 0.45) tmp.lerp(cGrass, THREE.MathUtils.clamp((flat - 0.45) * 1.2 * (1 - y / 44) * nz, 0, 0.5));
-      if (y > 14 && y < 40 && flat > 0.4 && flat < 0.7) tmp.lerp(cScree, 0.35);
-      const snow = THREE.MathUtils.clamp((y - 48) / 14, 0, 1) * THREE.MathUtils.clamp(flat * 1.6 + (y - 60) / 20, 0, 1);
-      if (snow > 0) tmp.lerp(cSnow, snow);
+      if (y < 16 && flat > 0.6) tmp.lerp(cForest, THREE.MathUtils.clamp((flat - 0.6) * 2 * (1 - y / 16), 0, 0.8));
+      if (y < 22 && flat > 0.5) tmp.lerp(cGrass, THREE.MathUtils.clamp((flat - 0.5) * (1 - y / 22) * nz, 0, 0.4));
+      if (flat > 0.4 && flat < 0.7) tmp.lerp(cScree, 0.3);
+      // Snow: settles on anything that isn't too steep; higher up it clings to
+      // steeper rock too, and the summit is fully white. Blue in the shade.
+      const settle = THREE.MathUtils.clamp((flat - 0.32) * 2.4, 0, 1) * THREE.MathUtils.clamp((y - 6) / 8, 0, 1);
+      const cling = THREE.MathUtils.clamp((y - 30) / 26, 0, 1) * THREE.MathUtils.clamp((flat - 0.08) * 1.9, 0, 1);
+      const snow = Math.max(settle, cling) * (0.75 + 0.25 * nz);
+      if (snow > 0) {
+        const shade = THREE.MathUtils.clamp(0.55 - flat, 0, 0.5) * 1.4;
+        tmp.lerp(shade > 0.2 ? cSnowShade : cSnow, snow);
+        if (fbm(x * 0.4 + 50, z * 0.4 - 33, 2) > 0.42 && flat < 0.5) tmp.lerp(cIce, snow * 0.6);
+      }
       col[i * 3] = tmp.r;
       col[i * 3 + 1] = tmp.g;
       col[i * 3 + 2] = tmp.b;
@@ -791,8 +938,8 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     map: grain,
     roughnessMap: grain,
     normalMap: grainNormal,
-    normalScale: new THREE.Vector2(0.7, 0.7),
-    roughness: 0.97,
+    normalScale: new THREE.Vector2(0.55, 0.55),
+    roughness: 0.9,
     metalness: 0,
   });
   const geo = buildTerrain(FINE, 336, false); // 0.25 units per vertex around the peak
@@ -839,8 +986,8 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     s3.set(sc * (0.7 + rnd() * 0.6), sc * (0.5 + rnd() * 0.5), sc * (0.6 + rnd() * 0.5));
     m4.compose(v3, q, s3);
     holds.setMatrixAt(placed, m4);
-    const shade = 0.6 + rnd() * 0.5;
-    holds.setColorAt(placed, tmp.setRGB(0.66 * shade, 0.55 * shade, 0.38 * shade));
+    const shade = 0.5 + rnd() * 0.5;
+    holds.setColorAt(placed, tmp.setRGB(0.42 * shade, 0.4 * shade, 0.38 * shade));
     placed++;
   }
   holds.count = placed;
@@ -862,7 +1009,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     const z = (rnd() - 0.5) * 220 + 60;
     const y = terrain(x, z);
     terrainNormal(x, z, nrm);
-    if (y > 30 || nrm.y < 0.6) continue;
+    if (y > 24 || nrm.y < 0.6) continue;
     if (Math.hypot(x, z) < MAIN.rCliff + 4) continue;
     const sc = 0.7 + rnd() * 0.9;
     v3.set(x, y - 0.2, z);
@@ -872,7 +1019,8 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     m4.compose(v3, q, s3);
     trees.setMatrixAt(tPlaced, m4);
     const g = 0.75 + rnd() * 0.5;
-    trees.setColorAt(tPlaced, tmp.setRGB(0.25 * g, 0.36 * g, 0.22 * g));
+    const dust = THREE.MathUtils.clamp((y - 4) / 20, 0.15, 0.7);
+    trees.setColorAt(tPlaced, tmp.setRGB(0.2 * g, 0.32 * g, 0.2 * g).lerp(cSnow, dust));
     tPlaced++;
   }
   trees.count = tPlaced;
@@ -882,9 +1030,9 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
 
   // Grass tufts in cracks on the lower cliff
   const tuftGeo = new THREE.ConeGeometry(0.12, 0.5, 5);
-  const tuftMat = new THREE.MeshStandardMaterial({ color: 0x6f7a4d, roughness: 1 });
-  const tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, 160);
-  for (let i = 0; i < 160; i++) {
+  const tuftMat = new THREE.MeshStandardMaterial({ color: 0x8a8460, roughness: 1 });
+  const tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, 70);
+  for (let i = 0; i < 70; i++) {
     const ang = (rnd() - 0.5) * 2;
     const r = MAIN.rCliff - 3 + rnd() * 9;
     const x = r * Math.sin(ang);
@@ -901,10 +1049,40 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   tufts.instanceMatrix.needsUpdate = true;
   scene.add(tufts);
 
+  // Snow piled on ledges of the cliff band, and cornices near the top
+  const clumpGeo = new THREE.SphereGeometry(0.34, 10, 8);
+  const clumpMat = new THREE.MeshStandardMaterial({ color: 0xf4f7fb, roughness: 0.85 });
+  const CLUMPS = 900;
+  const clumps = new THREE.InstancedMesh(clumpGeo, clumpMat, CLUMPS);
+  clumps.castShadow = true;
+  clumps.receiveShadow = true;
+  let cPlaced = 0;
+  guard = 0;
+  while (cPlaced < CLUMPS && guard++ < 60000) {
+    const ang = (rnd() - 0.5) * 2.6;
+    const r = MAIN.rTop - 1 + rnd() * (MAIN.rCliff + 14 - MAIN.rTop);
+    const x = r * Math.sin(ang);
+    const z = r * Math.cos(ang);
+    terrainNormal(x, z, nrm);
+    if (nrm.y < 0.45) continue; // only where snow can sit
+    const y = terrain(x, z);
+    const sc = 0.5 + rnd() * 1.4;
+    v3.set(x, y + 0.02, z);
+    e.set(0, rnd() * 6.28, 0);
+    q.setFromEuler(e);
+    s3.set(sc * (0.8 + rnd() * 0.8), sc * 0.38, sc * (0.7 + rnd() * 0.8));
+    m4.compose(v3, q, s3);
+    clumps.setMatrixAt(cPlaced, m4);
+    cPlaced++;
+  }
+  clumps.count = cPlaced;
+  clumps.instanceMatrix.needsUpdate = true;
+  scene.add(clumps);
+
   // Summit marker: a cairn and a small flag
   {
     const top = new THREE.Vector3(0, terrain(0, 0), 0);
-    const cairnMat = new THREE.MeshStandardMaterial({ color: 0x8a7a60, roughness: 1 });
+    const cairnMat = new THREE.MeshStandardMaterial({ color: 0x55504b, roughness: 1 });
     for (let i = 0; i < 4; i++) {
       const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5 - i * 0.09, 0), cairnMat);
       st.position.set(top.x, top.y + 0.3 + i * 0.5, top.z);
@@ -950,7 +1128,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   }
 
   // Snow / dust motes ----------------------------------------------------------
-  const moteCount = 420;
+  const moteCount = 900;
   const moteGeo = new THREE.BufferGeometry();
   const motePos = new Float32Array(moteCount * 3);
   const moteVel = new Float32Array(moteCount * 3);
@@ -958,14 +1136,14 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     motePos[i * 3] = (rnd() - 0.5) * 16;
     motePos[i * 3 + 1] = (rnd() - 0.5) * 14;
     motePos[i * 3 + 2] = (rnd() - 0.5) * 8;
-    moteVel[i * 3] = (rnd() - 0.5) * 0.3;
-    moteVel[i * 3 + 1] = -0.25 - rnd() * 0.6;
-    moteVel[i * 3 + 2] = (rnd() - 0.5) * 0.2;
+    moteVel[i * 3] = -0.9 - rnd() * 1.6; // wind across the face
+    moteVel[i * 3 + 1] = -0.35 - rnd() * 0.9;
+    moteVel[i * 3 + 2] = (rnd() - 0.5) * 0.5;
   }
   moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
   const motes = new THREE.Points(
     moteGeo,
-    new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.55, depthWrite: false, sizeAttenuation: true }),
+    new THREE.PointsMaterial({ color: 0xffffff, size: 0.065, transparent: true, opacity: 0.75, depthWrite: false, sizeAttenuation: true }),
   );
   scene.add(motes);
 
@@ -985,12 +1163,12 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   const dustVel = new Float32Array(dustCount * 3);
   const dustLife = new Float32Array(dustCount);
   dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
-  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xd8c9a4, size: 0.09, transparent: true, opacity: 0.7, depthWrite: false }));
+  const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xf2f6fb, size: 0.09, transparent: true, opacity: 0.85, depthWrite: false }));
   scene.add(dust);
 
   // Falling rocks ---------------------------------------------------------------
   const rockGeo = new THREE.DodecahedronGeometry(0.09, 0);
-  const rockMat = new THREE.MeshStandardMaterial({ color: 0x8a7350, roughness: 0.95 });
+  const rockMat = new THREE.MeshStandardMaterial({ color: 0x4a4542, roughness: 0.95 });
   const rocks: { m: THREE.Mesh; v: THREE.Vector3; w: THREE.Vector3; life: number }[] = [];
   for (let i = 0; i < 8; i++) {
     const m = new THREE.Mesh(rockGeo, rockMat);
@@ -1150,62 +1328,169 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   const lerpAngle = (o: THREE.Object3D, axis: "x" | "y" | "z", target: number, k: number) => {
     o.rotation[axis] += (target - o.rotation[axis]) * k;
   };
-  function poseArm(a: Limb, shoulderX: number, shoulderZ: number, elbowX: number, k: number) {
-    lerpAngle(a.shoulder, "x", shoulderX, k);
-    lerpAngle(a.shoulder, "z", shoulderZ, k);
-    lerpAngle(a.elbow, "x", elbowX, k);
+  const D = THREE.MathUtils.degToRad;
+
+  // Contacts: where each hand and foot is planted on the mountain (world).
+  type Contact = { pos: THREE.Vector3; from: THREE.Vector3; to: THREE.Vector3; lift: number; planted: boolean };
+  const mkContact = (): Contact => ({ pos: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(), lift: -1, planted: false });
+  const contacts = { hL: mkContact(), hR: mkContact(), fL: mkContact(), fR: mkContact() };
+  const STEP_ORDER: (keyof typeof contacts)[] = ["hR", "fL", "hL", "fR"];
+  let lastWindow = -1;
+  // Frame at the climber, filled in each frame before posing.
+  const fR = new THREE.Vector3(); // right
+  const fU = new THREE.Vector3(); // up the slope
+  const fN = new THREE.Vector3(); // out of the rock
+  const tmpV = new THREE.Vector3();
+  const tmpW = new THREE.Vector3();
+
+  /** Drop a point onto the mountain surface along the local normal. */
+  function toSurface(p: THREE.Vector3): THREE.Vector3 {
+    for (let i = 0; i < 4; i++) {
+      const d = p.y - terrain(p.x, p.z);
+      const n = terrainNormal(p.x, p.z);
+      p.addScaledVector(n, -d * n.y);
+    }
+    return p;
   }
-  function poseLeg(l: Leg, hipX: number, hipZ: number, kneeX: number, k: number) {
+
+  /** Ideal contact for a limb relative to the body, on the surface, plus stand-off. */
+  function idealContact(key: keyof typeof contacts, out: THREE.Vector3, lead = 0): THREE.Vector3 {
+    const P = rig.root.position;
+    const hand = key === "hL" || key === "hR";
+    const sx = key === "hL" || key === "fL" ? -1 : 1;
+    out.copy(P)
+      .addScaledVector(fU, (hand ? 0.98 : -0.5) + lead)
+      .addScaledVector(fR, sx * (hand ? 0.3 : 0.24))
+      .addScaledVector(fN, -0.4);
+    toSurface(out);
+    // Hands hold the axes: the pick is in the ice, the glove stands off the surface.
+    out.addScaledVector(fN, hand ? 0.2 : 0.09);
+    return out;
+  }
+
+  function plantAll(instant: boolean) {
+    for (const key of STEP_ORDER) {
+      const c = contacts[key];
+      idealContact(key, c.to);
+      if (instant || !c.planted) {
+        c.pos.copy(c.to);
+        c.lift = -1;
+      } else {
+        c.from.copy(c.pos);
+        c.lift = 0;
+      }
+      c.planted = true;
+    }
+  }
+
+  /** Move planted limbs' contacts along their lift arcs; re-plant anything overstretched. */
+  function updateContacts(dt: number, stepping: boolean, per: number) {
+    if (stepping) {
+      const cycle = (clock / per) % 1;
+      const win = Math.floor(cycle * 4);
+      if (win !== lastWindow) {
+        lastWindow = win;
+        const key = STEP_ORDER[win];
+        const c = contacts[key];
+        c.from.copy(c.pos);
+        idealContact(key, c.to, 0.32);
+        c.lift = 0;
+      }
+    }
+    for (const key of STEP_ORDER) {
+      const c = contacts[key];
+      if (c.lift >= 0) {
+        c.lift = Math.min(1, c.lift + dt / (stepping ? per * 0.25 : 0.45));
+        const e = c.lift < 0.5 ? 2 * c.lift * c.lift : 1 - Math.pow(-2 * c.lift + 2, 2) / 2;
+        c.pos.lerpVectors(c.from, c.to, e).addScaledVector(fN, Math.sin(c.lift * Math.PI) * 0.16);
+        if (c.lift >= 1) {
+          c.lift = -1;
+          c.pos.copy(c.to);
+          if (key === "fL" || key === "fR") {
+            sound.scrape();
+            emitDust(c.pos, 8);
+          } else sound.slap();
+        }
+      } else {
+        // Overstretched (after a slip or a big move): step it in.
+        const joint = key === "hL" ? rig.armL.shoulder : key === "hR" ? rig.armR.shoulder : key === "fL" ? rig.legL.hip : rig.legR.hip;
+        joint.getWorldPosition(tmpV);
+        const reach = key === "hL" || key === "hR" ? 0.57 : 0.8;
+        if (tmpV.distanceTo(c.pos) > reach) {
+          c.from.copy(c.pos);
+          idealContact(key, c.to);
+          c.lift = 0;
+        }
+      }
+    }
+  }
+
+  /** IK the four limbs onto their contacts (or FK where a limb is free). */
+  function solveLimbs(freeArmR: boolean, freeAll: boolean) {
+    rig.root.updateMatrixWorld(true);
+    const poleL = tmpV.copy(fR).multiplyScalar(-0.7).addScaledVector(fN, 0.75);
+    const poleR = tmpW.copy(fR).multiplyScalar(0.7).addScaledVector(fN, 0.75);
+    if (!freeAll) {
+      solveTwoBone(rig.armL.shoulder, rig.armL.elbow, rig.armL.l1, rig.armL.l2, contacts.hL.pos, poleL);
+      if (!freeArmR) solveTwoBone(rig.armR.shoulder, rig.armR.elbow, rig.armR.l1, rig.armR.l2, contacts.hR.pos, poleR);
+      const kneeL = tmpV.copy(fR).multiplyScalar(-0.9).addScaledVector(fN, 0.55);
+      const kneeR = tmpW.copy(fR).multiplyScalar(0.9).addScaledVector(fN, 0.55);
+      solveTwoBone(rig.legL.hip, rig.legL.knee, rig.legL.l1, rig.legL.l2, contacts.fL.pos, kneeL);
+      solveTwoBone(rig.legR.hip, rig.legR.knee, rig.legR.l1, rig.legR.l2, contacts.fR.pos, kneeR);
+    }
+  }
+
+  function fkArmR(shoulderX: number, shoulderZ: number, elbowX: number, k: number) {
+    lerpAngle(rig.armR.shoulder, "x", shoulderX, k);
+    lerpAngle(rig.armR.shoulder, "y", 0, k);
+    lerpAngle(rig.armR.shoulder, "z", shoulderZ, k);
+    lerpAngle(rig.armR.elbow, "x", elbowX, k);
+    lerpAngle(rig.armR.elbow, "y", 0, k);
+    lerpAngle(rig.armR.elbow, "z", 0, k);
+  }
+  function fkArmL(shoulderX: number, shoulderZ: number, elbowX: number, k: number) {
+    lerpAngle(rig.armL.shoulder, "x", shoulderX, k);
+    lerpAngle(rig.armL.shoulder, "y", 0, k);
+    lerpAngle(rig.armL.shoulder, "z", shoulderZ, k);
+    lerpAngle(rig.armL.elbow, "x", elbowX, k);
+    lerpAngle(rig.armL.elbow, "y", 0, k);
+    lerpAngle(rig.armL.elbow, "z", 0, k);
+  }
+  function fkLeg(l: Leg, hipX: number, hipZ: number, kneeX: number, k: number) {
     lerpAngle(l.hip, "x", hipX, k);
+    lerpAngle(l.hip, "y", 0, k);
     lerpAngle(l.hip, "z", hipZ, k);
     lerpAngle(l.knee, "x", kneeX, k);
+    lerpAngle(l.knee, "y", 0, k);
+    lerpAngle(l.knee, "z", 0, k);
   }
-  const D = THREE.MathUtils.degToRad;
 
   function updatePose(dt: number) {
     const k = Math.min(1, dt * 7);
     const t = clock;
     const b = rig.body;
     const h = rig.head;
+    const per = 1.6;
+    let freeR = false;
+    let freeAll = false;
+
     switch (phase) {
       case "climb": {
-        // Four-limb ladder cycle. Period scales a little with speed.
-        const per = 1.5;
+        updateContacts(dt, true, per);
         const ph = (t / per) * Math.PI * 2;
-        const sL = Math.sin(ph);
-        const sR = Math.sin(ph + Math.PI);
-        // Arms reach up alternately (shoulder x negative = arm forward/up).
-        poseArm(rig.armL, D(150 + 22 * sL), D(-8 + 10 * sL), D(-28 - 22 * Math.max(0, -sL)), k);
-        poseArm(rig.armR, D(150 + 22 * sR), D(8 - 10 * sR), D(-28 - 22 * Math.max(0, -sR)), k);
-        // Legs: frog position, stepping opposite to the arms.
-        poseLeg(rig.legL, D(62 - 24 * sR), D(-22), D(-70 - 26 * Math.max(0, sR)), k);
-        poseLeg(rig.legR, D(62 - 24 * sL), D(22), D(-70 - 26 * Math.max(0, sL)), k);
-        b.position.y += (0.05 * Math.sin(ph * 2) - b.position.y) * k;
-        b.position.x += (0.05 * sL - b.position.x) * k;
-        lerpAngle(b, "x", D(12), k);
-        lerpAngle(b, "z", D(4 * sL), k);
-        lerpAngle(h, "x", D(-28 + 6 * Math.sin(ph * 2)), k);
-        lerpAngle(h, "y", D(6 * sL), k);
-        // Footfalls: scrape + dust twice per cycle.
-        const step = Math.floor((t / per) * 2);
-        if (step !== lastStep) {
-          lastStep = step;
-          sound.scrape();
-          if (Math.random() < 0.5) sound.slap();
-          const foot = step % 2 ? rig.legL.foot : rig.legR.foot;
-          emitDust(foot.getWorldPosition(v3), 8);
-        }
+        b.position.y += (0.04 * Math.sin(ph * 2) - b.position.y) * k;
+        b.position.x += (0.05 * Math.sin(ph) - b.position.x) * k;
+        lerpAngle(b, "x", D(10), k);
+        lerpAngle(b, "z", D(3 * Math.sin(ph)), k);
+        lerpAngle(h, "x", D(-26 + 5 * Math.sin(ph * 2)), k);
+        lerpAngle(h, "y", D(6 * Math.sin(ph)), k);
         break;
       }
       case "rest": {
-        // Straight arms, hang low, breathe. Occasionally shake out.
-        poseArm(rig.armL, D(168), D(-10), D(-8), k);
-        poseArm(rig.armR, D(166), D(10), D(-10), k);
-        poseLeg(rig.legL, D(70), D(-26), D(-96), k);
-        poseLeg(rig.legR, D(58), D(24), D(-84), k);
-        b.position.y += (-0.06 + 0.012 * Math.sin(t * 2.1) - b.position.y) * k;
+        updateContacts(dt, false, per);
+        b.position.y += (-0.05 + 0.012 * Math.sin(t * 2.1) - b.position.y) * k;
         b.position.x += (0 - b.position.x) * k;
-        lerpAngle(b, "x", D(18 + 1.5 * Math.sin(t * 2.1)), k);
+        lerpAngle(b, "x", D(16 + 1.5 * Math.sin(t * 2.1)), k);
         lerpAngle(b, "z", 0, k);
         lerpAngle(h, "x", D(-10), k);
         lerpAngle(h, "y", D(10 * Math.sin(t * 0.5)), k);
@@ -1216,43 +1501,37 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         break;
       }
       case "shake": {
-        // One hand off the wall, shaking the pump out.
+        updateContacts(dt, false, per);
+        freeR = true;
         const wig = Math.sin(t * 16) * 0.5;
-        poseArm(rig.armL, D(168), D(-10), D(-8), k);
-        poseArm(rig.armR, D(-20 - 8 * wig), D(28 + 6 * wig), D(-30 + 20 * Math.sin(t * 16)), k);
-        poseLeg(rig.legL, D(70), D(-26), D(-96), k);
-        poseLeg(rig.legR, D(58), D(24), D(-84), k);
-        b.position.y += (-0.05 - b.position.y) * k;
-        lerpAngle(b, "x", D(16), k);
+        fkArmR(D(-20 - 8 * wig), D(28 + 6 * wig), D(-30 + 20 * Math.sin(t * 16)), k);
+        b.position.y += (-0.04 - b.position.y) * k;
+        lerpAngle(b, "x", D(14), k);
         lerpAngle(b, "z", D(-6), k);
         lerpAngle(h, "x", D(-6), k);
         lerpAngle(h, "y", D(30), k);
         break;
       }
       case "chalk": {
-        // Right hand dips into the chalk bag behind the hip, then back.
+        updateContacts(dt, false, per);
+        freeR = true;
         const p = phaseT / IDLE_DUR.chalk;
         const dip = p < 0.35 ? p / 0.35 : p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3;
         const wig = p >= 0.35 && p < 0.7 ? Math.sin(t * 18) * 0.15 : 0;
-        poseArm(rig.armL, D(166), D(-8), D(-10), k);
-        poseArm(rig.armR, D(160 - 190 * dip - wig * 30), D(12 + 20 * dip), D(-20 - 50 * dip), k);
-        poseLeg(rig.legL, D(66), D(-24), D(-92), k);
-        poseLeg(rig.legR, D(60), D(22), D(-86), k);
-        b.position.y += (-0.04 - b.position.y) * k;
-        lerpAngle(b, "x", D(16), k);
+        fkArmR(D(160 - 190 * dip - wig * 30), D(12 + 20 * dip), D(-20 - 50 * dip), k);
+        b.position.y += (-0.03 - b.position.y) * k;
+        lerpAngle(b, "x", D(14), k);
         lerpAngle(b, "z", D(-4 * dip), k);
         lerpAngle(h, "x", D(-4), k);
         lerpAngle(h, "y", D(-10 + 30 * dip), k);
         break;
       }
       case "clip": {
-        // Drill a bolt at chest height, then clip the rope through it.
+        updateContacts(dt, false, per);
+        freeR = true;
         const p = phaseT / IDLE_DUR.clip;
         const hammer = p > 0.12 && p < 0.62 ? Math.sin(t * 22) : 0;
-        poseArm(rig.armL, D(166), D(-8), D(-10), k);
-        poseArm(rig.armR, D(118 - 14 * hammer), D(18), D(-70 + 30 * Math.max(0, hammer)), 0.5);
-        poseLeg(rig.legL, D(66), D(-24), D(-92), k);
-        poseLeg(rig.legR, D(60), D(22), D(-86), k);
+        fkArmR(D(118 - 14 * hammer), D(18), D(-70 + 30 * Math.max(0, hammer)), 0.5);
         b.position.y += (-0.02 - b.position.y) * k;
         b.position.x += (0.03 * hammer - b.position.x) * 0.5;
         lerpAngle(b, "x", D(12), k);
@@ -1270,34 +1549,32 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         if (p >= 0.66 && !anchorPlaced) {
           anchorPlaced = true;
           const hp = rig.armR.hand.getWorldPosition(v3).clone();
-          hp.y = terrain(hp.x, hp.z);
+          toSurface(hp);
           addAnchor(hp);
           sound.slap();
         }
         break;
       }
       case "look": {
-        // Look down at the exposure, then up at the line.
+        updateContacts(dt, false, per);
         const p = phaseT / IDLE_DUR.look;
         const look = p < 0.5 ? Math.sin(p * Math.PI) : -Math.sin((p - 0.5) * Math.PI);
-        poseArm(rig.armL, D(166), D(-8), D(-12), k);
-        poseArm(rig.armR, D(164), D(8), D(-12), k);
-        poseLeg(rig.legL, D(68), D(-26), D(-94), k);
-        poseLeg(rig.legR, D(60), D(24), D(-86), k);
-        b.position.y += (-0.05 - b.position.y) * k;
-        lerpAngle(b, "x", D(16 + 8 * look), k);
+        b.position.y += (-0.04 - b.position.y) * k;
+        lerpAngle(b, "x", D(14 + 8 * look), k);
         lerpAngle(b, "z", 0, k);
         lerpAngle(h, "x", D(40 * look - 8), k);
         lerpAngle(h, "y", D(20 * Math.sin(t * 0.8)), k);
         break;
       }
       case "slip": {
-        // Feet skate off, body peels back, arms grab at air.
+        // Everything lets go: limbs flail in FK.
+        freeAll = true;
+        for (const key of STEP_ORDER) contacts[key].planted = false;
         const flail = Math.sin(t * 14);
-        poseArm(rig.armL, D(120 - 40 * flail), D(-40), D(-40), 0.4);
-        poseArm(rig.armR, D(120 + 40 * flail), D(40), D(-40), 0.4);
-        poseLeg(rig.legL, D(20 - 30 * flail), D(-30), D(-30), 0.4);
-        poseLeg(rig.legR, D(20 + 30 * flail), D(30), D(-30), 0.4);
+        fkArmL(D(120 - 40 * flail), D(-40), D(-40), 0.4);
+        fkArmR(D(120 + 40 * flail), D(40), D(-40), 0.4);
+        fkLeg(rig.legL, D(20 - 30 * flail), D(-30), D(-30), 0.4);
+        fkLeg(rig.legR, D(20 + 30 * flail), D(30), D(-30), 0.4);
         lerpAngle(b, "x", D(38), 0.2);
         lerpAngle(b, "z", D(14 * flail), 0.3);
         lerpAngle(h, "x", D(-40), 0.3);
@@ -1305,20 +1582,19 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         break;
       }
       case "recover": {
-        // Swing back into the wall, get feet on, shake it off.
+        // Swing back in and get everything planted again, one limb at a time.
+        if (!contacts.hL.planted) plantAll(false);
+        updateContacts(dt, false, per);
         const p = Math.min(1, phaseT / 2.2);
         const settle = 1 - p;
-        poseArm(rig.armL, D(160), D(-12), D(-30 - 40 * settle), k);
-        poseArm(rig.armR, D(158), D(12), D(-30 - 40 * settle), k);
-        poseLeg(rig.legL, D(60 + 20 * settle * Math.sin(t * 6)), D(-24), D(-90), k);
-        poseLeg(rig.legR, D(58 - 20 * settle * Math.sin(t * 6)), D(22), D(-86), k);
-        lerpAngle(b, "x", D(18 + 14 * settle), k);
+        lerpAngle(b, "x", D(16 + 14 * settle), k);
         lerpAngle(b, "z", D(8 * settle * Math.sin(t * 9)), k);
         lerpAngle(h, "x", D(-6 + 30 * settle), k);
         lerpAngle(h, "y", D(20 * settle * Math.sin(t * 5)), k);
         break;
       }
     }
+    solveLimbs(freeR, freeAll);
   }
 
   // Frame loop ---------------------------------------------------------------
@@ -1399,10 +1675,14 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     // Basis: face into the rock, "up" along the slope, swing about the normal.
     const upSlope = up.clone().addScaledVector(surfN, -up.dot(surfN)).normalize();
     const right = new THREE.Vector3().crossVectors(upSlope, surfN).normalize();
+    fR.copy(right);
+    fU.copy(upSlope);
+    fN.copy(surfN);
     basis.makeBasis(right, upSlope, surfN);
     rig.root.quaternion.setFromRotationMatrix(basis);
     rig.root.rotateOnAxis(new THREE.Vector3(0, 0, 1), THREE.MathUtils.clamp(-tangent.x * 0.4, -0.3, 0.3) + swing * 0.6);
     rig.root.position.addScaledVector(right, swing * 0.35);
+    if (!contacts.hL.planted && phase !== "slip") plantAll(true);
     updatePose(dt);
 
     // Headlamp comes on in the shade high on the wall; a subtle touch.
@@ -1478,10 +1758,11 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
       let x = motePos[i * 3] + moteVel[i * 3] * dt;
       let y = motePos[i * 3 + 1] + moteVel[i * 3 + 1] * dt;
       let z = motePos[i * 3 + 2] + moteVel[i * 3 + 2] * dt;
-      // Keep the motes in a box around the camera target.
+      // Keep the motes in a box around the climber.
       if (y < -7) y += 14;
       if (x < -8) x += 16;
       if (x > 8) x -= 16;
+      if (y > 7) y -= 14;
       if (z < -4) z += 8;
       if (z > 4) z -= 8;
       motePos[i * 3] = x;
@@ -1490,7 +1771,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     }
     motes.position.copy(target).addScaledVector(wallNormal, 2);
     moteGeo.attributes.position.needsUpdate = true;
-    (motes.material as THREE.PointsMaterial).opacity = wallLocal.y > 50 ? 0.7 : 0.25;
+    (motes.material as THREE.PointsMaterial).opacity = 0.55 + 0.35 * Math.max(0, Math.sin(clock * 0.21)); // gusts of spindrift
 
     if (sparks.visible) {
       let alive = false;
