@@ -88,6 +88,14 @@ export const site = {
       "https://tiles.openfreemap.org/styles/positron",
   },
 
+  // ZEC hiker on the homepage hero: the price range the mountain spans.
+  // Below priceMin the hiker waits at the trailhead; above priceMax, the summit.
+  // Adjust as the market moves so the climb stays meaningful.
+  zecHiker: {
+    priceMin: 600,
+    priceMax: 1800,
+  },
+
   legal: "Not an exchange. Not financial advice.",
 } as const;
 

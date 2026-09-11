@@ -26,6 +26,8 @@ import { IndiaMap } from "@/components/india-map";
 import { XTimeline } from "@/components/social/x-timeline";
 import { YouTubeVideos } from "@/components/social/youtube-videos";
 import { getYouTubeVideos } from "@/lib/youtube";
+import { getZecPrice } from "@/lib/zec-price";
+import { ZecHiker } from "@/components/zec-hiker";
 
 export const metadata: Metadata = {
   title: `${site.name}: ${site.tagline}`,
@@ -33,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [counters, cities, featuredPosts, lumaEvents, youtubeVideos, updates, bounties] =
+  const [counters, cities, featuredPosts, lumaEvents, youtubeVideos, updates, bounties, zec] =
     await Promise.all([
       getCounters(),
       getCities(),
@@ -42,6 +44,7 @@ export default async function HomePage() {
       getYouTubeVideos(3),
       getUpdates(),
       getBounties(),
+      getZecPrice(),
     ]);
   const recentUpdates = updates.slice(0, 3);
   const recentEvents = lumaEvents.slice(0, 3);
@@ -52,67 +55,77 @@ export default async function HomePage() {
     <>
       {/* ---------- Hero ---------- */}
       <section className="relative overflow-hidden border-b border-line">
-        {/* India map backdrop */}
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <IndiaMap
-            variant="outline"
-            className="absolute right-4 top-1/2 hidden h-[82%] max-h-[520px] w-auto -translate-y-1/2 opacity-30 sm:block lg:right-12"
-          />
           <div className="absolute -left-24 -top-24 h-96 w-96 rounded-full bg-gold-bright/15 blur-[120px]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/80 to-bg/20" />
+          <div className="absolute -right-32 bottom-0 h-80 w-80 rounded-full bg-gold-bright/10 blur-[120px]" />
         </div>
 
         <Container className="relative">
-          <div className="max-w-2xl py-20 sm:py-28">
-            <div className="mb-5 flex flex-wrap items-center gap-2">
-              <Badge tone="gold">🇮🇳 Official community</Badge>
-              <Badge tone="muted">
-                Since {siteStats.since} · {counters.citiesLit} {counters.citiesLit === 1 ? "city" : "cities"}
-              </Badge>
-            </div>
-            <h1 className="display text-5xl leading-[0.98] sm:text-7xl">
-              The home of <span className="text-gold">Zcash</span> in India.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg text-muted">
-              A grassroots community learning financial privacy together: real
-              meetups on real campuses, an online Live series, and a growing map
-              of cities. {site.voice.oneAtATime}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href={site.links.telegram} external>
-                Join the community
-              </ButtonLink>
-              <ButtonLink href="/learn/start-here" variant="ghost">
-                Start here
-              </ButtonLink>
-              <ButtonLink href="/map" variant="ghost">
-                See the map
-              </ButtonLink>
+          <div className="grid items-center gap-10 py-16 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(300px,460px)] lg:gap-12 lg:py-24">
+            <div className="max-w-2xl">
+              <div className="mb-5 flex flex-wrap items-center gap-2">
+                <Badge tone="gold">🇮🇳 Official community</Badge>
+                <Badge tone="muted">
+                  Since {siteStats.since} · {counters.citiesLit} {counters.citiesLit === 1 ? "city" : "cities"}
+                </Badge>
+              </div>
+              <h1 className="display text-5xl leading-[0.98] sm:text-7xl">
+                The home of <span className="text-gold">Zcash</span> in India.
+              </h1>
+              <p className="mt-6 max-w-xl text-lg text-muted">
+                A grassroots community learning financial privacy together: real
+                meetups on real campuses, an online Live series, and a growing map
+                of cities. {site.voice.oneAtATime}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <ButtonLink href={site.links.telegram} external>
+                  Join the community
+                </ButtonLink>
+                <ButtonLink href="/learn/start-here" variant="ghost">
+                  Start here
+                </ButtonLink>
+                <ButtonLink href="/map" variant="ghost">
+                  See the map
+                </ButtonLink>
+              </div>
+
+              {/* ZEC Live prize callout */}
+              <Link
+                href="/events"
+                className="mt-6 inline-flex items-center gap-3 rounded-full border border-gold/40 bg-gold-bright/10 py-2 pl-3 pr-4 text-sm transition-colors hover:bg-gold-bright/20"
+              >
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-bright px-2.5 py-0.5 text-xs font-bold text-text">
+                  🏆 ZEC Live
+                </span>
+                <span className="text-text">
+                  Win <strong className="font-semibold">real ZEC</strong> at our
+                  online Live sessions
+                </span>
+                <span className="text-gold" aria-hidden="true">
+                  →
+                </span>
+              </Link>
+
+              {/* Social proof row */}
+              <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
+                <span>Find us on</span>
+                <a href={site.links.x} target="_blank" rel="noopener noreferrer" className="hover:text-gold">X / Twitter</a>
+                <a href={site.links.telegram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Telegram</a>
+                <a href={site.links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Instagram</a>
+              </div>
             </div>
 
-            {/* ZEC Live prize callout */}
-            <Link
-              href="/events"
-              className="mt-6 inline-flex items-center gap-3 rounded-full border border-gold/40 bg-gold-bright/10 py-2 pl-3 pr-4 text-sm transition-colors hover:bg-gold-bright/20"
-            >
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-bright px-2.5 py-0.5 text-xs font-bold text-text">
-                🏆 ZEC Live
-              </span>
-              <span className="text-text">
-                Win <strong className="font-semibold">real ZEC</strong> at our
-                online Live sessions
-              </span>
-              <span className="text-gold" aria-hidden="true">
-                →
-              </span>
-            </Link>
-
-            {/* Social proof row */}
-            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted">
-              <span>Find us on</span>
-              <a href={site.links.x} target="_blank" rel="noopener noreferrer" className="hover:text-gold">X / Twitter</a>
-              <a href={site.links.telegram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Telegram</a>
-              <a href={site.links.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-gold">Instagram</a>
+            {/* ZEC hiker: the price, drawn as a climb */}
+            <div className="mx-auto w-full max-w-md lg:max-w-none">
+              <ZecHiker
+                price={zec?.price ?? null}
+                change24h={zec?.change24h ?? null}
+                priceMin={site.zecHiker.priceMin}
+                priceMax={site.zecHiker.priceMax}
+              />
+              <p className="mt-2 text-center text-xs text-muted/60 lg:text-right">
+                ZEC price, live. The higher the price, the higher the climb.
+              </p>
             </div>
           </div>
         </Container>
