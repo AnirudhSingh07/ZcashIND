@@ -95,37 +95,81 @@ function fbm(x: number, y: number, oct = 5, lac = 2.05, gain = 0.5) {
 }
 
 // ---------------------------------------------------------------------------
-// The wall
+// The mountain: a heightfield with a summit, a near-vertical cliff band on the
+// front face (the route), gentler slopes and forest below, and other peaks
+// behind. World +y is up; the climber's face is on the +z side.
 // ---------------------------------------------------------------------------
 
-const WALL_W = 76;
-const WALL_H = 150;
-const WALL_TILT = THREE.MathUtils.degToRad(5); // past vertical: a 95 degree face
+const TERRAIN_SIZE = 560;
+type PeakSpec = { cx: number; cz: number; H: number; rTop: number; rCliff: number; apron: number; face: number };
 
-/** Surface relief at wall-local (x, y). Positive = protrudes toward the camera. */
-function relief(x: number, y: number): number {
-  const macro = fbm(x * 0.045, y * 0.045, 4) * 4.4;
-  const meso = fbm(x * 0.16 + 3.1, y * 0.16 - 1.7, 4) * 0.9;
-  const micro = fbm(x * 0.55 - 7.3, y * 0.55 + 2.2, 3) * 0.22;
-  // Strata: near-horizontal bands with a slight dip, broken by noise.
-  const band = Math.sin(y * 0.55 + fbm(x * 0.08, y * 0.02) * 2.4) * 0.28;
-  // Ledges: staircase steps every ~11 units, softened.
-  const step = ((y % 11) + 11) % 11;
-  const ledge = step < 1.4 ? (1 - step / 1.4) * 0.5 * (0.5 + 0.5 * fbm(x * 0.2, y)) : 0;
-  return macro + meso + micro + band + ledge;
-}
-
-// Route up the face in wall-local (x, y). Slight zigzag, like real pitches.
-const ROUTE_XY: [number, number][] = [
-  [-3.5, -66], [1.5, -58], [-2.5, -50], [3.2, -42], [-1, -34], [2.8, -26],
-  [-3.4, -18], [1.4, -10], [-2, -2], [3.4, 6], [-0.8, 14], [2.2, 22],
-  [-2.8, 30], [1.6, 38], [-1.2, 46], [2.6, 54], [-0.6, 62], [0.4, 68],
+/** Main peak: H = summit height, rCliff = radius where the cliff band ends on the front. */
+const MAIN: PeakSpec = { cx: 0, cz: 0, H: 74, rTop: 4.5, rCliff: 16, apron: 110, face: 1 };
+const OTHERS: PeakSpec[] = [
+  { cx: -150, cz: -170, H: 96, rTop: 8, rCliff: 40, apron: 150, face: 0.4 },
+  { cx: 140, cz: -210, H: 82, rTop: 7, rCliff: 34, apron: 140, face: 0.3 },
+  { cx: -40, cz: -290, H: 110, rTop: 10, rCliff: 46, apron: 170, face: 0.2 },
+  { cx: 230, cz: -60, H: 48, rTop: 6, rCliff: 30, apron: 120, face: 0.3 },
+  // The ones the side camera looks toward.
+  { cx: -150, cz: 60, H: 66, rTop: 7, rCliff: 30, apron: 120, face: 0.5 },
+  { cx: -230, cz: -50, H: 104, rTop: 11, rCliff: 46, apron: 170, face: 0.3 },
+  { cx: -140, cz: 170, H: 40, rTop: 6, rCliff: 26, apron: 110, face: 0.4 },
+  { cx: -70, cz: 240, H: 30, rTop: 5, rCliff: 22, apron: 100, face: 0.4 },
+  { cx: 120, cz: 150, H: 26, rTop: 5, rCliff: 20, apron: 100, face: 0.3 },
 ];
 
+function peakHeight(x: number, z: number, p: PeakSpec): number {
+  const dx = x - p.cx;
+  const dz = z - p.cz;
+  const r = Math.hypot(dx, dz);
+  const ang = Math.atan2(dx, dz); // 0 = facing +z (the camera side)
+  const faceness = (0.5 + 0.5 * Math.cos(ang)) * p.face; // 1 on the front
+  const rc = p.rCliff + (1 - faceness) * 26; // the back is a broad ridge, not a cliff
+  const hBase = p.H * 0.28;
+  if (r < p.rTop) return p.H - (r / p.rTop) * (r / p.rTop) * 2.5;
+  if (r < rc) return p.H - ((p.H - hBase) * (r - p.rTop)) / (rc - p.rTop);
+  const a = Math.max(0, 1 - (r - rc) / p.apron);
+  return hBase * Math.pow(a, 1.7);
+}
+
+/** Terrain height at world (x, z). */
+function terrain(x: number, z: number): number {
+  let h = peakHeight(x, z, MAIN);
+  for (const o of OTHERS) h = Math.max(h, peakHeight(x, z, o));
+  // Rolling ground and crags. Bigger relief on steep ground so the cliff is craggy.
+  const steep = Math.min(1, Math.max(0, (h - 20) / 30));
+  h += fbm(x * 0.03, z * 0.03, 4) * 5;
+  h += fbm(x * 0.13 + 4, z * 0.13 - 2, 4) * (1.2 + steep * 3.2);
+  h += fbm(x * 0.5 - 9, z * 0.5 + 3, 3) * (0.25 + steep * 0.9);
+  h += Math.abs(fbm(x * 0.22 + 30, z * 0.22 - 17, 3)) * steep * 1.6; // ridged crags
+  // Strata on the cliff: horizontal ledges.
+  h += Math.sin(h * 0.9 + fbm(x * 0.08, z * 0.08) * 3) * 0.35 * steep;
+  return h;
+}
+
+const _n1 = new THREE.Vector3();
+/** Surface normal at (x, z) by finite differences. */
+function terrainNormal(x: number, z: number, out = _n1): THREE.Vector3 {
+  const e = 0.35;
+  const hx = terrain(x + e, z) - terrain(x - e, z);
+  const hz = terrain(x, z + e) - terrain(x, z - e);
+  return out.set(-hx / (2 * e), 1, -hz / (2 * e)).normalize();
+}
+
+/** The route: up the front cliff band from its base to the summit, zigzagging. */
 function routeCurve(): THREE.CatmullRomCurve3 {
-  const pts = ROUTE_XY.map(([x, y]) => new THREE.Vector3(x, y, relief(x, y)));
+  const pts: THREE.Vector3[] = [];
+  const N = 40;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const r = MAIN.rCliff + 0.6 - t * (MAIN.rCliff + 0.6 - (MAIN.rTop - 0.4));
+    const ang = Math.sin(t * 9.5) * 0.24 + Math.sin(t * 3.1) * 0.12;
+    const x = r * Math.sin(ang);
+    const z = r * Math.cos(ang);
+    pts.push(new THREE.Vector3(x, terrain(x, z), z));
+  }
   const c = new THREE.CatmullRomCurve3(pts, false, "centripetal", 0.5);
-  c.arcLengthDivisions = 600;
+  c.arcLengthDivisions = 800;
   return c;
 }
 
@@ -616,6 +660,7 @@ const IDLE: Phase[] = ["rest", "chalk", "clip", "look", "shake", "rest", "clip",
 const IDLE_DUR: Record<string, number> = { rest: 4.5, chalk: 3.2, clip: 5.4, look: 3.6, shake: 3.2 };
 
 export function createZecScene(container: HTMLElement, initialT: number): ZecScene {
+  let flagMesh: THREE.Mesh | null = null;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // Renderer -------------------------------------------------------------------
@@ -632,20 +677,20 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0xf2ead9, 14, 70);
+  scene.fog = new THREE.Fog(0xebe5d8, 50, 300);
 
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 400);
+  const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 900);
 
   // Sky ------------------------------------------------------------------------
   const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(320, 24, 16),
+    new THREE.SphereGeometry(800, 24, 16),
     new THREE.ShaderMaterial({
       side: THREE.BackSide,
       depthWrite: false,
       uniforms: {
-        top: { value: new THREE.Color(0xe8dcc2) },
-        mid: { value: new THREE.Color(0xf7f1e3) },
-        bot: { value: new THREE.Color(0xf3e9d5) },
+        top: { value: new THREE.Color(0xb9c8d6) },
+        mid: { value: new THREE.Color(0xe9e6dc) },
+        bot: { value: new THREE.Color(0xece5d6) },
       },
       vertexShader: `varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
       fragmentShader: `uniform vec3 top; uniform vec3 mid; uniform vec3 bot; varying vec3 vP;
@@ -661,9 +706,9 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.near = 1;
-  sun.shadow.camera.far = 80;
-  sun.shadow.camera.left = sun.shadow.camera.bottom = -9;
-  sun.shadow.camera.right = sun.shadow.camera.top = 9;
+  sun.shadow.camera.far = 140;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -14;
+  sun.shadow.camera.right = sun.shadow.camera.top = 14;
   sun.shadow.bias = -0.0008;
   sun.shadow.normalBias = 0.03;
   scene.add(sun);
@@ -677,72 +722,94 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     new THREE.SpriteMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.9, depthWrite: false, fog: false }),
   );
   sunSprite.scale.set(28, 28, 1);
-  sunSprite.position.set(150, 130, -180);
+  sunSprite.position.set(260, 190, -420);
   scene.add(sunSprite);
   const sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTexture(), color: 0xf4b728, transparent: true, opacity: 0.35, depthWrite: false, fog: false }));
   sunGlow.scale.set(120, 70, 1);
   sunGlow.position.copy(sunSprite.position);
   scene.add(sunGlow);
 
-  // Wall -----------------------------------------------------------------------
-  const wall = new THREE.Group();
-  wall.rotation.x = WALL_TILT;
-  scene.add(wall);
-
-  const geo = new THREE.PlaneGeometry(WALL_W, WALL_H, 220, 460);
-  const pos = geo.attributes.position as THREE.BufferAttribute;
-  const colors = new Float32Array(pos.count * 3);
-  const cA = new THREE.Color(0xc9b085); // warm sandstone
-  const cB = new THREE.Color(0x8f7650); // shadowed rock
-  const cC = new THREE.Color(0xd9c7a2); // light band
-  const cLichen = new THREE.Color(0x7f8a5a);
-  const cSnow = new THREE.Color(0xfbf8f0);
+  // Terrain ----------------------------------------------------------------------
+  // Two meshes sharing one material: a fine patch around the peak (where the
+  // climber is) and a coarse far terrain that dips slightly under the patch.
+  const cRock = new THREE.Color(0xb59c74);
+  const cRockDark = new THREE.Color(0x6e5a3f);
+  const cRockLight = new THREE.Color(0xd8c7a3);
+  const cScree = new THREE.Color(0x9c8b6a);
+  const cGrass = new THREE.Color(0x6f7f4e);
+  const cForest = new THREE.Color(0x4f6140);
+  const cSnow = new THREE.Color(0xfbf9f3);
   const tmp = new THREE.Color();
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const y = pos.getY(i);
-    const z = relief(x, y);
-    pos.setZ(i, z);
-    // Colour by relief, band and altitude.
-    const n = 0.5 + 0.5 * fbm(x * 0.12 + 11, y * 0.12 - 4, 3);
-    const band = 0.5 + 0.5 * Math.sin(y * 0.55 + fbm(x * 0.08, y * 0.02) * 2.4);
-    tmp.copy(cB).lerp(cA, THREE.MathUtils.clamp(0.25 + z * 0.16 + n * 0.3, 0, 1));
-    tmp.lerp(cC, band * 0.35 * n);
-    // Steep facets (crevice walls, undersides of ledges) sit in shadow.
-    const slope = Math.abs(relief(x + 0.4, y) - z) + Math.abs(relief(x, y + 0.4) - z);
-    tmp.multiplyScalar(THREE.MathUtils.clamp(1.05 - slope * 0.5, 0.55, 1.05));
-    const lichen = fbm(x * 0.3 - 20, y * 0.3 + 9, 3);
-    if (y < 10 && lichen > 0.38) tmp.lerp(cLichen, THREE.MathUtils.clamp((lichen - 0.38) * 3, 0, 0.7));
-    // Snow settles on upward facets high up.
-    const up = relief(x, y + 0.6) - z; // positive = face tilts upward
-    const snowAmt = THREE.MathUtils.clamp((y - 38) / 18, 0, 1) * THREE.MathUtils.clamp(up * 2.2 + 0.25, 0, 1);
-    if (snowAmt > 0) tmp.lerp(cSnow, snowAmt);
-    colors[i * 3] = tmp.r;
-    colors[i * 3 + 1] = tmp.g;
-    colors[i * 3 + 2] = tmp.b;
+  const nrm = new THREE.Vector3();
+  const FINE = 84;
+
+  function buildTerrain(size: number, segs: number, sinkUnderFine: boolean): THREE.BufferGeometry {
+    const g = new THREE.PlaneGeometry(size, size, segs, segs);
+    g.rotateX(-Math.PI / 2); // lie flat: x right, z toward the camera
+    const p = g.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i);
+      const z = p.getZ(i);
+      let y = terrain(x, z);
+      if (sinkUnderFine) {
+        const inside = Math.max(Math.abs(x), Math.abs(z));
+        const k = THREE.MathUtils.clamp(1 - (inside - FINE / 2 + 6) / 6, 0, 1);
+        y -= k * 0.8;
+      }
+      p.setY(i, y);
+    }
+    g.computeVertexNormals();
+    const n = g.attributes.normal as THREE.BufferAttribute;
+    const col = new Float32Array(p.count * 3);
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i);
+      const y = p.getY(i);
+      const z = p.getZ(i);
+      const flat = n.getY(i); // 1 = level, 0 = vertical
+      const nz = 0.5 + 0.5 * fbm(x * 0.09 + 11, z * 0.09 - 4, 3);
+      tmp.copy(cRockDark).lerp(cRock, THREE.MathUtils.clamp(0.3 + nz * 0.5 + flat * 0.25, 0, 1));
+      tmp.lerp(cRockLight, nz * nz * 0.35);
+      if (y < 34 && flat > 0.55) tmp.lerp(cForest, THREE.MathUtils.clamp((0.55 - flat + 0.4) * (1 - y / 34), 0, 0.85));
+      if (y < 44 && flat > 0.45) tmp.lerp(cGrass, THREE.MathUtils.clamp((flat - 0.45) * 1.2 * (1 - y / 44) * nz, 0, 0.5));
+      if (y > 14 && y < 40 && flat > 0.4 && flat < 0.7) tmp.lerp(cScree, 0.35);
+      const snow = THREE.MathUtils.clamp((y - 48) / 14, 0, 1) * THREE.MathUtils.clamp(flat * 1.6 + (y - 60) / 20, 0, 1);
+      if (snow > 0) tmp.lerp(cSnow, snow);
+      col[i * 3] = tmp.r;
+      col[i * 3 + 1] = tmp.g;
+      col[i * 3 + 2] = tmp.b;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    return g;
   }
-  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  geo.computeVertexNormals();
+
   const grain = grainTexture();
+  grain.repeat.set(70, 70);
   const grainNormal = grainNormalTexture();
+  grainNormal.repeat.set(70, 70);
   const wallMat = new THREE.MeshStandardMaterial({
     vertexColors: true,
     map: grain,
     roughnessMap: grain,
     normalMap: grainNormal,
-    normalScale: new THREE.Vector2(0.75, 0.75),
-    roughness: 0.96,
+    normalScale: new THREE.Vector2(0.7, 0.7),
+    roughness: 0.97,
     metalness: 0,
   });
+  const geo = buildTerrain(FINE, 336, false); // 0.25 units per vertex around the peak
   const wallMesh = new THREE.Mesh(geo, wallMat);
   wallMesh.receiveShadow = true;
   wallMesh.castShadow = true;
-  wall.add(wallMesh);
+  scene.add(wallMesh);
+  const farGeo = buildTerrain(TERRAIN_SIZE, 180, true);
+  const farMesh = new THREE.Mesh(farGeo, wallMat);
+  farMesh.receiveShadow = true;
+  scene.add(farMesh);
 
-  // Holds and loose rock on the face
+  // Loose rock and holds on the cliff band
   const holdGeo = new THREE.DodecahedronGeometry(0.28, 0);
-  const holdMat = new THREE.MeshStandardMaterial({ roughness: 0.9, vertexColors: false });
-  const holds = new THREE.InstancedMesh(holdGeo, holdMat, 2200);
+  const holdMat = new THREE.MeshStandardMaterial({ roughness: 0.9 });
+  const HOLDS = 1600;
+  const holds = new THREE.InstancedMesh(holdGeo, holdMat, HOLDS);
   holds.castShadow = true;
   holds.receiveShadow = true;
   const m4 = new THREE.Matrix4();
@@ -755,63 +822,114 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  for (let i = 0; i < 2200; i++) {
-    const x = (rnd() - 0.5) * WALL_W * 0.96;
-    const y = (rnd() - 0.5) * WALL_H * 0.96;
-    const z = relief(x, y);
-    const sc = 0.18 + rnd() * rnd() * 0.85;
-    v3.set(x, y, z - 0.08 * sc);
+  let placed = 0;
+  let guard = 0;
+  while (placed < HOLDS && guard++ < 40000) {
+    const ang = (rnd() - 0.5) * 2.4;
+    const r = MAIN.rTop + rnd() * (MAIN.rCliff + 10 - MAIN.rTop);
+    const x = r * Math.sin(ang);
+    const z = r * Math.cos(ang);
+    terrainNormal(x, z, nrm);
+    if (nrm.y > 0.75 && rnd() < 0.7) continue; // mostly on the steep stuff
+    const y = terrain(x, z);
+    const sc = 0.18 + rnd() * rnd() * 0.9;
+    v3.set(x, y - 0.06 * sc, z);
     e.set(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28);
     q.setFromEuler(e);
     s3.set(sc * (0.7 + rnd() * 0.6), sc * (0.5 + rnd() * 0.5), sc * (0.6 + rnd() * 0.5));
     m4.compose(v3, q, s3);
-    holds.setMatrixAt(i, m4);
+    holds.setMatrixAt(placed, m4);
     const shade = 0.6 + rnd() * 0.5;
-    holds.setColorAt(i, tmp.setRGB(0.66 * shade, 0.55 * shade, 0.38 * shade));
+    holds.setColorAt(placed, tmp.setRGB(0.66 * shade, 0.55 * shade, 0.38 * shade));
+    placed++;
   }
+  holds.count = placed;
   holds.instanceMatrix.needsUpdate = true;
   if (holds.instanceColor) holds.instanceColor.needsUpdate = true;
-  wall.add(holds);
+  scene.add(holds);
 
-  // Tufts of grass in crevices low on the face
+  // Forest on the lower slopes: conifers
+  const treeGeo = new THREE.ConeGeometry(0.9, 3.2, 6);
+  treeGeo.translate(0, 1.4, 0);
+  const treeMat = new THREE.MeshStandardMaterial({ color: 0x3f5a3a, roughness: 1 });
+  const TREES = 1400;
+  const trees = new THREE.InstancedMesh(treeGeo, treeMat, TREES);
+  trees.castShadow = true;
+  let tPlaced = 0;
+  guard = 0;
+  while (tPlaced < TREES && guard++ < 60000) {
+    const x = (rnd() - 0.5) * 300;
+    const z = (rnd() - 0.5) * 220 + 60;
+    const y = terrain(x, z);
+    terrainNormal(x, z, nrm);
+    if (y > 30 || nrm.y < 0.6) continue;
+    if (Math.hypot(x, z) < MAIN.rCliff + 4) continue;
+    const sc = 0.7 + rnd() * 0.9;
+    v3.set(x, y - 0.2, z);
+    e.set(0, rnd() * 6.28, 0);
+    q.setFromEuler(e);
+    s3.set(sc, sc * (0.9 + rnd() * 0.5), sc);
+    m4.compose(v3, q, s3);
+    trees.setMatrixAt(tPlaced, m4);
+    const g = 0.75 + rnd() * 0.5;
+    trees.setColorAt(tPlaced, tmp.setRGB(0.25 * g, 0.36 * g, 0.22 * g));
+    tPlaced++;
+  }
+  trees.count = tPlaced;
+  trees.instanceMatrix.needsUpdate = true;
+  if (trees.instanceColor) trees.instanceColor.needsUpdate = true;
+  scene.add(trees);
+
+  // Grass tufts in cracks on the lower cliff
   const tuftGeo = new THREE.ConeGeometry(0.12, 0.5, 5);
   const tuftMat = new THREE.MeshStandardMaterial({ color: 0x6f7a4d, roughness: 1 });
-  const tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, 140);
-  for (let i = 0; i < 140; i++) {
-    const x = (rnd() - 0.5) * WALL_W * 0.9;
-    const y = -WALL_H / 2 + rnd() * rnd() * 60;
-    const z = relief(x, y);
-    v3.set(x, y, z + 0.1);
-    e.set(-0.5 + rnd() * 0.4, rnd() * 6.28, (rnd() - 0.5) * 0.6);
+  const tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, 160);
+  for (let i = 0; i < 160; i++) {
+    const ang = (rnd() - 0.5) * 2;
+    const r = MAIN.rCliff - 3 + rnd() * 9;
+    const x = r * Math.sin(ang);
+    const z = r * Math.cos(ang);
+    const y = terrain(x, z);
+    v3.set(x, y + 0.05, z);
+    e.set(-0.3 + rnd() * 0.3, rnd() * 6.28, (rnd() - 0.5) * 0.6);
     q.setFromEuler(e);
-    const sc = 0.6 + rnd() * 0.9;
+    const sc = 0.25 + rnd() * 0.35;
     s3.set(sc, sc, sc);
     m4.compose(v3, q, s3);
     tufts.setMatrixAt(i, m4);
   }
   tufts.instanceMatrix.needsUpdate = true;
-  wall.add(tufts);
+  scene.add(tufts);
 
-  // Distant peaks --------------------------------------------------------------
-  const peakMat = new THREE.MeshStandardMaterial({ color: 0xd8cbae, roughness: 1, flatShading: true });
-  for (let i = 0; i < 5; i++) {
-    const g = new THREE.ConeGeometry(18 + i * 6, 40 + (i % 3) * 14, 7, 1);
-    const p = g.attributes.position as THREE.BufferAttribute;
-    for (let k = 0; k < p.count; k++) p.setX(k, p.getX(k) * (0.8 + noise(k * 0.3, i) * 0.3));
-    g.computeVertexNormals();
-    const peak = new THREE.Mesh(g, peakMat);
-    peak.position.set(-70 + i * 38, -60 + (i % 2) * 8, -70 - i * 10);
-    scene.add(peak);
+  // Summit marker: a cairn and a small flag
+  {
+    const top = new THREE.Vector3(0, terrain(0, 0), 0);
+    const cairnMat = new THREE.MeshStandardMaterial({ color: 0x8a7a60, roughness: 1 });
+    for (let i = 0; i < 4; i++) {
+      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5 - i * 0.09, 0), cairnMat);
+      st.position.set(top.x, top.y + 0.3 + i * 0.5, top.z);
+      st.castShadow = true;
+      scene.add(st);
+    }
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.4, 6), new THREE.MeshStandardMaterial({ color: 0x3a3129 }));
+    pole.position.set(top.x + 0.4, top.y + 1.4, top.z);
+    scene.add(pole);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.55), new THREE.MeshStandardMaterial({ color: 0xf4b728, side: THREE.DoubleSide, roughness: 0.8 }));
+    flag.position.set(top.x + 0.87, top.y + 2.35, top.z);
+    scene.add(flag);
+    flagMesh = flag;
   }
 
   // Clouds ---------------------------------------------------------------------
   const cloudTex = cloudTexture();
   const clouds: THREE.Sprite[] = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 14; i++) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTex, transparent: true, opacity: 0.55 + rnd() * 0.3, depthWrite: false }));
-    const sc = 18 + rnd() * 26;
+    const sc = 40 + rnd() * 70;
     sp.scale.set(sc, sc * 0.5, 1);
-    sp.position.set(-90 + rnd() * 180, -20 + rnd() * 80, -45 - rnd() * 60);
+    const a = rnd() * Math.PI * 2;
+    const rr = 120 + rnd() * 150;
+    sp.position.set(Math.cos(a) * rr, 26 + rnd() * 80, Math.sin(a) * rr);
     scene.add(sp);
     clouds.push(sp);
   }
@@ -885,11 +1003,11 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   // Route, anchors, rope --------------------------------------------------------
   const route = routeCurve();
   const anchorGroup = new THREE.Group();
-  wall.add(anchorGroup);
+  scene.add(anchorGroup);
   const anchorMetal = new THREE.MeshStandardMaterial({ color: 0xc4c7cc, roughness: 0.3, metalness: 0.9 });
   const anchorSling = new THREE.MeshStandardMaterial({ color: 0x1c3a5f, roughness: 0.8 });
-  const anchors: THREE.Vector3[] = []; // wall-local
-  function addAnchor(local: THREE.Vector3) {
+  const anchors: THREE.Vector3[] = []; // world space, the clip point
+  function addAnchor(at: THREE.Vector3) {
     const g = new THREE.Group();
     const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.12, 8), anchorMetal);
     bolt.rotation.x = Math.PI / 2;
@@ -903,17 +1021,18 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     const gate = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.011, 6, 14), anchorMetal);
     gate.position.set(0, -0.24, 0.09);
     g.add(gate);
-    g.position.copy(local);
-    g.position.z += 0.02;
+    const n = terrainNormal(at.x, at.z).clone();
+    g.position.copy(at).addScaledVector(n, 0.02);
+    g.lookAt(g.position.clone().add(n));
     anchorGroup.add(g);
-    anchors.push(local.clone().add(new THREE.Vector3(0, -0.24, 0.1)));
+    anchors.push(at.clone().add(new THREE.Vector3(0, -0.24, 0)).addScaledVector(n, 0.1));
     if (anchors.length > 6) {
       anchors.shift();
       anchorGroup.remove(anchorGroup.children[0]);
     }
   }
   const startPt = route.getPointAt(0);
-  addAnchor(new THREE.Vector3(startPt.x - 0.6, startPt.y - 0.2, relief(startPt.x - 0.6, startPt.y - 0.2)));
+  addAnchor(new THREE.Vector3(startPt.x - 0.6, terrain(startPt.x - 0.6, startPt.z + 0.2), startPt.z + 0.2));
 
   const ropeMat = new THREE.MeshStandardMaterial({ color: 0xd8462f, roughness: 0.75 });
   let ropeMesh: THREE.Mesh | null = null;
@@ -990,8 +1109,9 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     const r = rocks.find((k) => !k.m.visible);
     if (!r) return;
     const wp = rig.root.position;
-    r.m.position.set(wp.x + (Math.random() - 0.5) * 0.6, wp.y - 0.6, wp.z + 0.2);
-    r.v.set((Math.random() - 0.5) * 1.2, -0.5 - Math.random(), 0.6 + Math.random() * 0.8);
+    r.m.position.set(wp.x + (Math.random() - 0.5) * 0.6, wp.y - 0.6, wp.z);
+    r.m.position.addScaledVector(surfN, 0.3);
+    r.v.set((Math.random() - 0.5) * 1.2, -0.5 - Math.random(), 0).addScaledVector(surfN, 0.6 + Math.random() * 0.8);
     r.w.set(Math.random() * 8, Math.random() * 8, Math.random() * 8);
     r.life = 2.6;
     r.m.visible = true;
@@ -1149,9 +1269,8 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         }
         if (p >= 0.66 && !anchorPlaced) {
           anchorPlaced = true;
-          const hp = rig.armR.hand.getWorldPosition(v3);
-          wall.worldToLocal(hp);
-          hp.z = relief(hp.x, hp.y);
+          const hp = rig.armR.hand.getWorldPosition(v3).clone();
+          hp.y = terrain(hp.x, hp.z);
           addAnchor(hp);
           sound.slap();
         }
@@ -1207,6 +1326,8 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
   const tangent = new THREE.Vector3();
   const up = new THREE.Vector3(0, 1, 0);
   const wallNormal = new THREE.Vector3();
+  const surfN = new THREE.Vector3(0, 0, 1);
+  const basis = new THREE.Matrix4();
   let last = performance.now();
   let raf = 0;
 
@@ -1271,24 +1392,25 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     // Place the climber on the route -------------------------------------------
     route.getPointAt(THREE.MathUtils.clamp(curT, 0, 1), wallLocal);
     route.getTangentAt(THREE.MathUtils.clamp(curT, 0.001, 0.999), tangent);
-    const surface = relief(wallLocal.x, wallLocal.y);
+    terrainNormal(wallLocal.x, wallLocal.z, surfN);
     // Hang off the surface by about arm's length; a little further when slipping.
-    const off = phase === "slip" ? 0.9 : phase === "recover" ? 0.75 : 0.62;
-    wallLocal.z = surface + off;
-    wallLocal.x += swing * 0.35;
-    wallLocal.y += phase === "slip" ? 0 : Math.abs(swing) * -0.1;
-    rig.root.position.copy(wallLocal);
-    wall.localToWorld(rig.root.position);
-    // Face the wall (-z), tilt with the tangent and the pendulum.
-    rig.root.rotation.set(WALL_TILT, 0, THREE.MathUtils.clamp(-tangent.x * 0.5, -0.35, 0.35) + swing * 0.6);
+    const off = phase === "slip" ? 0.95 : phase === "recover" ? 0.78 : 0.62;
+    rig.root.position.copy(wallLocal).addScaledVector(surfN, off);
+    // Basis: face into the rock, "up" along the slope, swing about the normal.
+    const upSlope = up.clone().addScaledVector(surfN, -up.dot(surfN)).normalize();
+    const right = new THREE.Vector3().crossVectors(upSlope, surfN).normalize();
+    basis.makeBasis(right, upSlope, surfN);
+    rig.root.quaternion.setFromRotationMatrix(basis);
+    rig.root.rotateOnAxis(new THREE.Vector3(0, 0, 1), THREE.MathUtils.clamp(-tangent.x * 0.4, -0.3, 0.3) + swing * 0.6);
+    rig.root.position.addScaledVector(right, swing * 0.35);
     updatePose(dt);
 
     // Headlamp comes on in the shade high on the wall; a subtle touch.
-    rig.lamp.intensity += (((wallLocal.y > 40 ? 1.2 : 0.35) - rig.lamp.intensity) * dt) * 1.5;
+    rig.lamp.intensity += (((wallLocal.y > 58 ? 1.2 : 0.35) - rig.lamp.intensity) * dt) * 1.5;
 
     // Rope ----------------------------------------------------------------------
     const tie = rig.tieIn.getWorldPosition(v3).clone();
-    const pts: THREE.Vector3[] = anchors.slice(-3).map((a) => wall.localToWorld(a.clone()));
+    const pts: THREE.Vector3[] = anchors.slice(-3).map((a) => a.clone());
     pts.push(tie);
     const ropePts: THREE.Vector3[] = [];
     const tension = phase === "slip" && ropeCaught ? 1 : phase === "recover" ? 0.8 : phase === "rest" ? 0.35 : 0.15;
@@ -1302,7 +1424,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
         const sag = len * 0.18 * (lastSpan ? 1 - tension * 0.9 : 0.7);
         const mid = a.clone().lerp(bpt, 0.5);
         mid.y -= sag;
-        mid.z += sag * 0.35;
+        mid.addScaledVector(surfN, sag * 0.35);
         ropePts.push(mid);
       }
     }
@@ -1315,20 +1437,22 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     ropeMesh.castShadow = true;
     scene.add(ropeMesh);
 
-    // Camera: side on, a little out from the face and below, looking up the line
-    // so the climber is in profile against the rock with the drop underneath.
+    // Camera: side on, pulled back so the flank of the mountain, the drop and
+    // the sky are in frame with the climber in profile against the face.
     const target = rig.root.position;
-    wallNormal.set(0, 0, 1).applyEuler(wall.rotation);
-    const side = new THREE.Vector3(1, 0, 0);
+    wallNormal.copy(surfN);
+    wallNormal.y = 0;
+    wallNormal.normalize();
+    const side = new THREE.Vector3().crossVectors(up, wallNormal).normalize().negate(); // to the climber's right
     const desired = target
       .clone()
-      .addScaledVector(side, 6.2)
-      .addScaledVector(wallNormal, 2.0)
-      .addScaledVector(up, -1.2);
+      .addScaledVector(side, 9.5)
+      .addScaledVector(wallNormal, 4.6)
+      .addScaledVector(up, -1.0);
     // Handheld drift.
-    desired.y += Math.sin(clock * 0.51) * 0.1;
-    desired.z += Math.sin(clock * 0.37) * 0.12;
-    const look = target.clone().addScaledVector(up, 0.9).addScaledVector(wallNormal, 0.9);
+    desired.y += Math.sin(clock * 0.51) * 0.12;
+    desired.addScaledVector(wallNormal, Math.sin(clock * 0.37) * 0.15);
+    const look = target.clone().addScaledVector(up, 1.5).addScaledVector(wallNormal, 0.8);
     if (!camInit || reduce) {
       camPos.copy(desired);
       camLook.copy(look);
@@ -1366,7 +1490,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
     }
     motes.position.copy(target).addScaledVector(wallNormal, 2);
     moteGeo.attributes.position.needsUpdate = true;
-    (motes.material as THREE.PointsMaterial).opacity = wallLocal.y > 30 ? 0.7 : 0.3;
+    (motes.material as THREE.PointsMaterial).opacity = wallLocal.y > 50 ? 0.7 : 0.25;
 
     if (sparks.visible) {
       let alive = false;
@@ -1408,14 +1532,14 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
       r.m.rotation.x += r.w.x * dt;
       r.m.rotation.y += r.w.y * dt;
       r.m.rotation.z += r.w.z * dt;
-      // Bounce if we pass into the wall.
-      const lp = wall.worldToLocal(r.m.position.clone());
-      const surf = relief(lp.x, lp.y);
-      if (lp.z < surf + 0.1) {
-        lp.z = surf + 0.1;
-        r.m.position.copy(wall.localToWorld(lp));
-        r.v.z = Math.abs(r.v.z) * 0.45 + 0.4;
-        r.v.y *= 0.6;
+      // Bounce off the mountain.
+      const gy = terrain(r.m.position.x, r.m.position.z);
+      if (r.m.position.y < gy + 0.1) {
+        const n = terrainNormal(r.m.position.x, r.m.position.z).clone();
+        r.m.position.y = gy + 0.1;
+        const vn = r.v.dot(n);
+        r.v.addScaledVector(n, -1.55 * vn); // reflect with damping
+        r.v.multiplyScalar(0.7);
         r.v.x += (Math.random() - 0.5) * 0.6;
         sound.thump(0.5 + r.m.scale.x * 0.4);
       }
@@ -1423,8 +1547,8 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
 
     // Ambient life ---------------------------------------------------------------
     for (const c of clouds) {
-      c.position.x += dt * 0.35;
-      if (c.position.x > 110) c.position.x = -110;
+      c.position.x += dt * 0.6;
+      if (c.position.x > 380) c.position.x = -380;
     }
     for (const bd of birds) {
       bd.phase += dt * bd.speed;
@@ -1439,6 +1563,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
       bd.r.rotation.z = -flap;
     }
     if (Math.random() < dt * 0.05) sound.gust(Math.random() * 0.5);
+    if (flagMesh) flagMesh.rotation.y = Math.sin(clock * 5.5) * 0.35 + Math.sin(clock * 1.3) * 0.15;
 
     renderer.render(scene, camera);
   }
@@ -1468,6 +1593,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
       sound.disable();
       renderer.dispose();
       geo.dispose();
+      farGeo.dispose();
       holdGeo.dispose();
       grain.dispose();
       grainNormal.dispose();
