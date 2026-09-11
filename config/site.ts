@@ -88,12 +88,12 @@ export const site = {
       "https://tiles.openfreemap.org/styles/positron",
   },
 
-  // ZEC hiker on the homepage hero: the price range the mountain spans.
-  // Below priceMin the hiker waits at the trailhead; above priceMax, the summit.
-  // Adjust as the market moves so the climb stays meaningful.
+  // ZEC climber on the homepage hero. The climber starts mid-route at the
+  // price seen when the page loads and moves a fixed distance per dollar from
+  // there (world units; the climber is about 1.9 units tall). 0.6 means a $5
+  // tick is about a body-and-a-half of climbing.
   zecHiker: {
-    priceMin: 600,
-    priceMax: 1800,
+    unitsPerDollar: 0.6,
   },
 
   legal: "Not an exchange. Not financial advice.",

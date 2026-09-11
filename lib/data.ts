@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { parsePhotos } from "./utils";
-import type { Meetup } from "@prisma/client";
+import type { Meetup, Bounty as BountyModel } from "@prisma/client";
 import {
   lumaEvents as configLumaEvents,
   CITY_META,
@@ -400,7 +400,7 @@ const splitList = (s: string | null | undefined) =>
     .map((x) => x.trim())
     .filter(Boolean);
 
-type BountyRow = NonNullable<Awaited<ReturnType<typeof prisma.bounty.findFirst>>>;
+type BountyRow = BountyModel;
 type BountyWithRels = BountyRow & {
   winners?: { id: string; name: string; xHandle: string | null; place: string; prizeUsd: number; submissionUrl: string | null }[];
   submissions?: { id: string; xHandle: string | null; url: string }[];

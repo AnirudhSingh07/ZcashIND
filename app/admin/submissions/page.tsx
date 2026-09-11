@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Meetup } from "@prisma/client";
 import { parsePhotos, formatDateIST, padNode } from "@/lib/utils";
 import { Container, Section, Badge } from "@/components/ui";
 import { AdminNav } from "@/components/admin/admin-nav";
@@ -64,7 +65,7 @@ export default async function SubmissionsPage() {
   );
 }
 
-function Row({ r }: { r: Awaited<ReturnType<typeof prisma.meetup.findMany>>[number] }) {
+function Row({ r }: { r: Meetup }) {
   const photos = parsePhotos(r.photos);
   return (
     <Link

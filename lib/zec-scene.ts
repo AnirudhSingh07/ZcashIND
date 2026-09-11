@@ -765,6 +765,8 @@ function solveTwoBone(upper: THREE.Group, lower: THREE.Group, l1: number, l2: nu
 
 export type ClimbKind = "climb" | "slip";
 export interface ZecScene {
+  /** Route length in world units (the climber is ~1.9 units tall). */
+  routeLength: number;
   setTarget(t: number, kind: ClimbKind | "jump"): void;
   setSound(on: boolean): void;
   setPaused(paused: boolean): void;
@@ -1855,6 +1857,7 @@ export function createZecScene(container: HTMLElement, initialT: number): ZecSce
 
   // Public API -------------------------------------------------------------------
   return {
+    routeLength: route.getLength(),
     setTarget(t, kind) {
       if (kind === "jump") {
         curT = fromT = toT = THREE.MathUtils.clamp(t, 0, 1);

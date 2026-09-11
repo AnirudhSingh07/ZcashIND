@@ -120,11 +120,10 @@ export default async function HomePage() {
               <ZecHiker
                 price={zec?.price ?? null}
                 change24h={zec?.change24h ?? null}
-                priceMin={site.zecHiker.priceMin}
-                priceMax={site.zecHiker.priceMax}
+                unitsPerDollar={site.zecHiker.unitsPerDollar}
               />
               <p className="mt-2 text-center text-xs text-muted/60 lg:text-right">
-                The ZEC price, live. The higher it goes, the higher the climb.
+                The ZEC price, live. Every dollar it moves, the climber moves.
               </p>
             </div>
           </div>

@@ -15,30 +15,38 @@ import type { ZecScene } from "@/lib/zec-scene";
 export interface ZecHikerProps {
   price: number | null;
   change24h: number | null;
-  priceMin?: number;
-  priceMax?: number;
+  /** World units the climber moves per dollar of price change. */
+  unitsPerDollar?: number;
   /** Poll interval in ms. */
   pollMs?: number;
   className?: string;
 }
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
-const priceToT = (p: number, min: number, max: number) =>
-  max <= min ? 0.5 : clamp((p - min) / (max - min), 0, 1);
+/** Where on the route (0..1) the climber sits when the page loads. */
+const BASE_T = 0.5;
 const fmtPrice = (p: number) =>
-  p >= 100 ? `$${Math.round(p).toLocaleString("en-US")}` : `$${p.toFixed(2)}`;
+  `$${p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function ZecHiker({
   price: initialPrice,
   change24h: initialChange,
-  priceMin = 600,
-  priceMax = 1800,
+  unitsPerDollar = 0.6,
   pollMs = 20_000,
   className = "",
 }: ZecHikerProps) {
   const mount = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<ZecScene | null>(null);
   const lastPrice = useRef<number | null>(initialPrice);
+  // The price the climb is measured from: the first price we saw.
+  const basePrice = useRef<number | null>(initialPrice);
+
+  /** Route fraction for a price: base position plus distance per dollar. */
+  const toT = (p: number) => {
+    const sc = sceneRef.current;
+    if (!sc || basePrice.current == null) return BASE_T;
+    return clamp(BASE_T + ((p - basePrice.current) * unitsPerDollar) / sc.routeLength, 0.02, 0.98);
+  };
   const [price, setPrice] = useState<number | null>(initialPrice);
   const [change, setChange] = useState<number | null>(initialChange);
   const [status, setStatus] = useState<"ready" | "loading" | "failed">(
@@ -53,15 +61,14 @@ export function ZecHiker({
     if (!el) return;
     let scene: ZecScene | null = null;
     let cancelled = false;
-    const t0 = initialPrice == null ? 0.5 : priceToT(initialPrice, priceMin, priceMax);
     import("@/lib/zec-scene")
       .then(({ createZecScene }) => {
         if (cancelled) return;
         try {
-          scene = createZecScene(el, clamp(t0 - 0.04, 0, 1));
+          scene = createZecScene(el, BASE_T - 0.04);
           sceneRef.current = scene;
-          // Climb in from just below the current level.
-          scene.setTarget(t0, "climb");
+          // Climb in from just below the starting position.
+          scene.setTarget(BASE_T, "climb");
         } catch {
           setWebgl(false);
         }
@@ -98,12 +105,11 @@ export function ZecHiker({
       try {
         let data: { ok: boolean; price?: number; change24h?: number };
         if (demo) {
-          const base = lastPrice.current ?? (priceMin + priceMax) / 2;
-          const span = (priceMax - priceMin) * 0.1;
-          const seq = [span, 0, -span * 0.7, 0, span * 0.5, 0, 0, -span * 1.1, 0];
+          const base = lastPrice.current ?? 1200;
+          const seq = [6, 0, -4, 0, 9, 0, 0, -12, 0, 3];
           const delta = seq[step % seq.length];
           step += 1;
-          const next = clamp(base + delta, priceMin + 10, priceMax - 10);
+          const next = base + delta;
           data = { ok: true, price: next, change24h: (delta / base) * 100 };
         } else {
           const res = await fetch("/api/zec-price", { cache: "no-store" });
@@ -114,12 +120,15 @@ export function ZecHiker({
         const next = data.price;
         const prev = lastPrice.current;
         lastPrice.current = next;
+        if (basePrice.current == null) basePrice.current = next;
         setPrice(next);
-        setChange(typeof data.change24h === "number" ? data.change24h : 0);
+        setChange(typeof data.change24h === "number" ? data.change24h : null);
         setStatus("ready");
-        const to = priceToT(next, priceMin, priceMax);
-        if (prev == null || next > prev + 1e-9) sceneRef.current?.setTarget(to, "climb");
-        else if (next < prev - 1e-9) sceneRef.current?.setTarget(to, "slip");
+        const to = toT(next);
+        // Anything under a cent is noise, not a move.
+        if (prev == null) sceneRef.current?.setTarget(to, "climb");
+        else if (next > prev + 0.01) sceneRef.current?.setTarget(to, "climb");
+        else if (next < prev - 0.01) sceneRef.current?.setTarget(to, "slip");
       } catch {
         if (!cancelled) setStatus((s) => (s === "loading" ? "failed" : s));
       }
@@ -130,7 +139,8 @@ export function ZecHiker({
       cancelled = true;
       clearInterval(id);
     };
-  }, [initialPrice, pollMs, priceMin, priceMax]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrice, pollMs, unitsPerDollar]);
 
   const toggleSound = () => {
     const on = !sound;
@@ -164,10 +174,20 @@ export function ZecHiker({
         {status === "ready" && price != null && (
           <div className="flex items-center gap-2 rounded-full border border-line bg-white/85 px-3 py-1.5 text-sm font-semibold text-text shadow-sm backdrop-blur">
             <span className="text-xs font-bold tracking-wide text-gold">ZEC</span>
-            <span>{fmtPrice(price)}</span>
+            <span className="tabular-nums">{fmtPrice(price)}</span>
             {change != null && (
-              <span className={`text-xs ${up ? "text-success" : "text-danger"}`}>
+              <span className={`text-xs tabular-nums ${up ? "text-success" : "text-danger"}`}>
                 {up ? "▲" : "▼"} {Math.abs(change).toFixed(1)}%
+              </span>
+            )}
+            {basePrice.current != null && Math.abs(price - basePrice.current) >= 0.01 && (
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
+                  price >= basePrice.current ? "bg-success/15 text-success" : "bg-danger/15 text-danger"
+                }`}
+                title="Since you opened the page"
+              >
+                {price >= basePrice.current ? "+" : "-"}${Math.abs(price - basePrice.current).toFixed(2)}
               </span>
             )}
           </div>

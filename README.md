@@ -4,19 +4,17 @@ The India front door for Zcash. **Learn financial privacy, find the next meetup,
 
 A grassroots community site: not an exchange, not the Zcash Foundation, not financial advice. It teaches newcomers what shielded money is, shows official events and community IRL meetups, runs the bounty archive, and lets anyone submit a mini-meetup for review to appear on the **Zcash India IRL Map**.
 
-> **TODO: BEFORE PRODUCTION LAUNCH.** Migrate uploads to Cloudflare R2, S3, or similar persistent storage.
-> `/public/uploads` is ephemeral on Vercel and will be wiped on redeploy. Also add rate limiting / CAPTCHA
-> to the public submit form (`app/actions/submit.ts`).
+> **TODO before launch:** add rate limiting / CAPTCHA to the public submit form (`app/actions/submit.ts`).
 
 ## Stack
 
 - **Next.js 15** (App Router) + **TypeScript**: Server Components by default; Client Components only for the map, forms and embeds
 - **Tailwind CSS v4** with CSS-variable design tokens ("Ivory & Ink": a light, bold editorial theme)
-- **Prisma + SQLite** for data
+- **Prisma + Postgres** for data (Prisma Postgres on Vercel)
 - **Zod** + **Server Actions** for the submit form and admin actions
 - **MapLibre GL JS** rendering India from our own official boundary GeoJSON (no external tiles)
 - Markdown content in `/content/learn`
-- Uploads stored in `/public/uploads` (MVP, see the TODO above)
+- Uploads on Vercel Blob (local disk in development)
 - Admin protected by `ADMIN_PASSWORD` via a signed, HTTP-only cookie: no NextAuth, no wallet connect
 
 ## Quick start
@@ -24,7 +22,7 @@ A grassroots community site: not an exchange, not the Zcash Foundation, not fina
 ```bash
 cp .env.example .env      # then edit ADMIN_PASSWORD / secrets
 pnpm install
-pnpm db:push              # create the SQLite schema
+pnpm db:push              # create the database schema
 pnpm db:seed              # seed real events, bounties, updates
 pnpm dev                  # http://localhost:3000
 ```
@@ -78,7 +76,9 @@ See `.env.example`:
 
 | Var | Purpose |
 |---|---|
-| `DATABASE_URL` | SQLite path (`file:./dev.db`) |
+| `DATABASE_URL` | Postgres connection string (Prisma Postgres) |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob token for uploads (optional locally) |
+| `ADMIN_HOST` | Hostname that serves the admin (`admin.zcashind.com`) |
 | `ADMIN_PASSWORD` | Admin login password |
 | `ADMIN_COOKIE_SECRET` | Signs the admin session cookie (use a long random string) |
 | `NEXT_PUBLIC_SITE_URL` | Absolute URL for OG/SEO |
@@ -115,11 +115,29 @@ All community/ecosystem links live in **`config/site.ts`**.
 
 ## Deploy (Vercel)
 
-Set the env vars above in the Vercel dashboard. Move uploads to object storage first (see the TODO at the top).
+The site runs as one Vercel project (`zcashind`) serving two hostnames:
+
+- `zcashind.com` (and `www`, which redirects): the public site. `/admin` is not served here.
+- `admin.zcashind.com`: only the admin. Everything else redirects to `/admin`.
+
+`middleware.ts` does the split by hostname (`ADMIN_HOST`, `NEXT_PUBLIC_SITE_URL`). Localhost and preview
+deployments serve both.
+
+Infrastructure: Prisma Postgres (Vercel Marketplace) for the database, Vercel Blob for photo and video
+uploads (`BLOB_READ_WRITE_TOKEN`; falls back to `/public/uploads` locally when unset).
+
+```bash
+vercel env pull .env.local          # DATABASE_URL, BLOB_READ_WRITE_TOKEN, ...
+pnpm db:push                        # create the schema on the hosted DB (reads .env)
+pnpm db:seed                        # seed it
+vercel --prod                       # deploy
+```
+
+DNS at the registrar: `A @ 216.198.79.1`, `A @ 64.29.17.1`, `CNAME www cname.vercel-dns.com`,
+`CNAME admin cname.vercel-dns.com`.
 
 ## Still to do
 
-- Persistent object storage for uploads (R2/S3)
 - Rate limiting / CAPTCHA on the submit form
 - Hindi translations of the Learn pages (subtitles are in place; Google Translate covers the rest for now)
 - Luma API sync (events are entered by hand in `/admin/luma`)

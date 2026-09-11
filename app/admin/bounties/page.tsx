@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Bounty, BountyWinner, BountySubmission } from "@prisma/client";
 import {
   saveBounty,
   activateBounty,
@@ -68,7 +69,7 @@ const KINDS = [
   ["explainer", "Explainer"],
 ] as const;
 
-type BountyRow = NonNullable<Awaited<ReturnType<typeof prisma.bounty.findFirst>>>;
+type BountyRow = Bounty;
 
 /** Shared field set for the "new" form and each per-bounty "edit" form. */
 function BountyFields({ b }: { b?: BountyRow }) {
@@ -222,13 +223,13 @@ export default async function AdminBounties({
   const sp = await searchParams;
   const banner = (sp.saved && BANNERS.saved) || (sp.error && BANNERS[sp.error]) || null;
 
-  const bounties = await prisma.bounty.findMany({
+  const bounties = (await prisma.bounty.findMany({
     orderBy: { startDate: "desc" },
     include: {
       winners: { orderBy: { sortOrder: "asc" } },
       submissions: { orderBy: { sortOrder: "asc" } },
     },
-  });
+  })) as (Bounty & { winners: BountyWinner[]; submissions: BountySubmission[] })[];
 
   return (
     <Section className="py-8">

@@ -25,6 +25,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
+    "@prisma/extension-accelerate": "^3.0.1",
+    "@vercel/blob": "^2.8.0",
     "clsx": "^2.1.1",
     "maplibre-gl": "^4.7.1",
     "next": "15.1.6",

@@ -1,12 +1,12 @@
-// ZcashIND Prisma schema — SQLite for MVP.
-// Enums are stored as strings (SQLite has no native enum support).
+// ZcashIND Prisma schema. Postgres (Prisma Postgres on Vercel).
+// Enums are stored as strings to keep the schema portable.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
