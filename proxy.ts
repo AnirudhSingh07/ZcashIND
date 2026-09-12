@@ -16,7 +16,8 @@ export function proxy(req: NextRequest) {
   const host = (req.headers.get("host") || "").toLowerCase().split(":")[0];
   const { pathname } = req.nextUrl;
   const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
-  const isProdHost = host === ADMIN_HOST || host === PUBLIC_HOST || host === `www.${PUBLIC_HOST}`;
+  const isLocal = host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
+  const isProdHost = !isLocal && (host === ADMIN_HOST || host === PUBLIC_HOST || host === `www.${PUBLIC_HOST}`);
   if (!isProdHost) return NextResponse.next(); // localhost, previews
 
   if (host === ADMIN_HOST) {

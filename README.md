@@ -22,10 +22,8 @@ A grassroots community site: not an exchange, not the Zcash Foundation, not fina
 ```bash
 cp .env.example .env      # then edit ADMIN_PASSWORD / secrets
 pnpm install
-# Local Postgres (Docker), or pull the hosted DATABASE_URL with `vercel env pull`
-docker run -d --name zcashind-pg -e POSTGRES_USER=zcashind -e POSTGRES_PASSWORD=zcashind \
-  -e POSTGRES_DB=zcashind -p 5433:5432 postgres:16-alpine
-pnpm db:push              # create the database schema
+vercel env pull .env.local   # get DATABASE_URL (hosted Prisma Postgres); copy it into .env
+pnpm db:push              # create the database schema (already done for production)
 pnpm db:seed              # seed real events, bounties, updates
 pnpm dev                  # http://localhost:3000
 ```
